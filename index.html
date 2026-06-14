@@ -258,6 +258,321 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
 
       <div style={{padding:"0 1rem"}}>
         {plan.exercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);
+          return(<div key={ex.id} style={{background:"#fff",borderRadius:"12px",padding:".9rem 1rem",marginBottom:".65rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",borderLeft:`4px solid ${entry.done?"#4caf50":plan.color}`,opacity:entry.done?0.85:1}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:".5rem"}}>
+              <div><div style={{fontWeight:700,fontSize:".95rem"}}>{ex.name}</div><div style={{fontSize:".78rem",color:"#888",marginTop:1}}>{ex.target}</div></div>
+              <button onClick={()=>updateEntry(ex.id,"done",!entry.done)} style={{border:`2px solid ${entry.done?"#4caf50":"#ccc"}`,background:entry.done?"#4caf50":"#fff",borderRadius:"8px",width:36,height:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem",color:entry.done?"#fff":"#ccc",flexShrink:0}}>✓</button></div>
+            <div style={{display:"flex",gap:".4rem",flexWrap:"wrap"}}>
+              {!isMSTF&&<div style={{flex:1,minWidth:"60px"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Sets</label>
+                <input type="number" inputMode="numeric" value={entry.sets||""} onChange={e=>updateEntry(ex.id,"sets",e.target.value)} placeholder="—" style={IS}/></div>}
+              <div style={{flex:1,minWidth:"60px"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>{isMSTF?"TUL (sec)":ex.unit==="sec"?"Seconds":ex.unit==="min"?"Minutes":ex.unit==="rounds"?"Rounds":"Reps"}</label>
+                <input type="number" inputMode="numeric" value={entry.reps||""} onChange={e=>updateEntry(ex.id,"reps",e.target.value)} placeholder="—" style={IS}/></div>
+              {ex.hasWeight&&<div style={{flex:1,minWidth:"60px"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Lbs</label>
+                <input type="number" inputMode="decimal" value={entry.weight||""} onChange={e=>updateEntry(ex.id,"weight",e.target.value)} placeholder="—" style={IS}/></div>}
+            </div>
+            <div style={{marginTop:".4rem"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Notes</label>
+              <input type="text" value={entry.notes||""} onChange={e=>updateEntry(ex.id,"notes",e.target.value)} placeholder={isMSTF?"Reached failure? Band tension?":"How did it feel?"} style={{...IS,fontSize:".82rem"}}/></div>
+          </div>)})}
+      </div>
+    </>:
+    <div style={{padding:"0 1rem"}}>
+      <WS week={currentWeek} rData={rData} label="This Week" R={R} routine={routine}/>
+      {pastWeeks.length>0?pastWeeks.map(w=><WS key={w} week={w} rData={rData} label={`Week ${w}`} R={R} routine={routine}/>):
+        <div style={{textAlign:"center",color:"#999",padding:"2rem 1rem",fontSize:".9rem"}}>Past weeks appear here as you progress.</div>}
+      <button onClick={resetData} style={{display:"block",margin:"2rem auto 0",background:"none",border:"1px solid #ddd",color:"#c0392b",padding:".6rem 1.5rem",borderRadius:"8px",fontSize:".82rem",cursor:"pointer"}}>Reset {R.short} Progress</button>
+    </div>}
+  </div>);
+}
+
+// ═══ WEEK SUMMARY ═══
+function WS({week,rData,label,R,routine}){
+  const wk=`w${week}`;const wd=rData?.weeks?.[wk];const dayKeys=Object.keys(R.days);const isMSTF=routine==="mstf";
+  if(!wd&&label!=="This Week")return null;
+  return(<div style={{background:"#fff",borderRadius:"12px",padding:"1rem",marginBottom:".75rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)"}}>
+    <div style={{fontWeight:700,fontSize:"1rem",marginBottom:".6rem",color:R.color}}>{label}</div>
+    {dayKeys.map(dk=>{const day=R.days[dk];const dd=wd?.[dk];const exs=day.exercises;const logged=exs.filter(ex=>dd?.[ex.id]?.done).length;const total=exs.length;
+      return(<div key={dk} style={{marginBottom:".6rem",paddingBottom:".6rem",borderBottom:"1px solid #f0ece7"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".3rem"}}>
+          <div><span style={{fontWeight:600,fontSize:".88rem",color:day.color}}>{day.label}: {day.title}</span>
+            {dd?._date&&<span style={{fontSize:".72rem",color:"#aaa",marginLeft:".4rem"}}>{new Date(dd._date+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span>}</div>
+          <span style={{fontSize:".78rem",color:logged===total?"#4caf50":"#999"}}>{logged}/{total}{logged===total?" ✅":""}</span></div>
+        {dd&&<div style={{fontSize:".78rem",color:"#777"}}>{exs.map(ex=>{const e=dd[ex.id];if(!e?.done)return null;
+          return(<div key={ex.id} style={{marginLeft:".5rem",marginBottom:".15rem"}}><span style={{fontWeight:500}}>{ex.name}:</span>{" "}
+            {!isMSTF&&e.sets&&`${e.sets}×`}{e.reps?isMSTF?`${e.reps}s TUL`:e.reps:"—"}{e.weight?` @ ${e.weight}lb`:""}
+            {e.notes&&<span style={{color:"#aaa"}}> — {e.notes}</span>}</div>)})}</div>}
+        {!dd&&<div style={{fontSize:".78rem",color:"#ccc",marginLeft:".5rem"}}>Not logged</div>}
+      </div>)})}</div>);
+}
+
+// ═══ EXERCISE PLAN VIEW ═══
+function PlanView({routine}){
+  const R=ROUTINES[routine];const[openDay,setOpenDay]=useState(null);const isMSTF=routine==="mstf";
+  return(<div>
+    <div style={{background:R.color,color:"#fff",padding:"1.25rem 1rem",textAlign:"center"}}>
+      <div style={{fontSize:"1.35rem",fontWeight:700}}>{R.short} Exercise Guide</div>
+      <div style={{fontSize:".82rem",opacity:.8,marginTop:".2rem"}}>Tap a day for full instructions</div></div>
+    <div style={{margin:"1rem",padding:".85rem 1rem",background:isMSTF?"#f0ecf5":"#fdf3ec",borderRadius:"10px",fontSize:".82rem",lineHeight:1.55}}>
+      {isMSTF?<><strong style={{color:"#5b3a8c"}}>MSTF Method:</strong> Every rep takes ~20 seconds (10 up, 10 down). Do 1 set per exercise to complete muscle failure. Rest 30–60 sec between exercises. 2 sessions per week. Alternate Workout A and B. Focus on breathing and body awareness throughout.</>:
+      <><strong style={{color:"#c4713b"}}>Progression:</strong> Weeks 1–3: 2 rounds. Weeks 4+: 3 rounds. When 15 reps feel easy, slow tempo to 3s down / 1s up before adding weight. Rest 30–45s between exercises, 60–90s between rounds.</>}</div>
+    <div style={{padding:"0 1rem"}}>
+      {Object.entries(R.days).map(([key,day])=>{const isOpen=openDay===key;
+        return(<div key={key} style={{background:"#fff",borderRadius:"12px",marginBottom:".75rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",overflow:"hidden",border:`1px solid ${isOpen?day.color:"#e0dbd5"}`}}>
+          <button onClick={()=>setOpenDay(isOpen?null:key)} style={{width:"100%",padding:"1rem 1.25rem",border:"none",cursor:"pointer",textAlign:"left",background:isOpen?day.bg:"#fff",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><div style={{fontWeight:700,fontSize:"1rem",color:day.color}}>{day.label} — {day.title}</div>
+              <div style={{fontSize:".78rem",color:"#999",marginTop:2}}>{day.exercises.length} exercises</div></div>
+            <span style={{fontSize:"1.2rem",color:day.color,transition:"transform .2s",transform:isOpen?"rotate(180deg)":"none"}}>▼</span></button>
+          {isOpen&&<div style={{padding:"0 1.25rem 1.25rem"}}>
+            <PS title="Warm-Up" items={day.warmup} color={day.color}/>
+            <PS title={isMSTF?"Exercises — 1 Set Each to Failure":"Circuit — 2–3 Rounds"} items={day.exercises} color={day.color}/>
+            <PS title="Cool-Down" items={day.cooldown} color={day.color}/></div>}
+        </div>)})}
+      <div style={{background:"#fff",borderRadius:"12px",marginBottom:".75rem",padding:"1rem 1.25rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",border:"1px solid #e0dbd5"}}>
+        <div style={{fontWeight:700,fontSize:"1rem",color:"#4a6fa5"}}>Rest Days</div>
+        <div style={{fontSize:".85rem",color:"#777",marginTop:".4rem",lineHeight:1.55}}>
+          {isMSTF?"Rest 3–4 days between sessions. Your muscles grow during recovery, not during the workout. Light walking is fine on off days.":
+          "Take rest days between training days. 20–30 min walk or gentle stretching."}</div></div></div>
+    <div style={{textAlign:"center",padding:"1rem",color:"#999",fontSize:".78rem",lineHeight:1.7}}>Sharp joint pain → stop & substitute. Consistency beats intensity.</div>
+  </div>);
+}
+
+function PS({title,items,color}){
+  return(<div style={{marginTop:"1rem"}}>
+    <div style={{fontWeight:700,fontSize:".75rem",textTransform:"uppercase",letterSpacing:".06em",color:"#999",marginBottom:".5rem",paddingBottom:".3rem",borderBottom:"1px dashed #e0dbd5"}}>{title}</div>
+    {items.map((item,i)=>(<div key={i} style={{padding:".5rem 0",borderBottom:i<items.length-1?"1px solid #f0ece7":"none"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:".5rem"}}>
+        <span style={{fontWeight:600,fontSize:".92rem"}}>{item.name}</span>
+        <span style={{fontSize:".8rem",color:color,fontWeight:700,whiteSpace:"nowrap"}}>{item.target||item.sets}</span></div>
+      <div style={{fontSize:".8rem",color:"#777",marginTop:".1rem",lineHeight:1.45}}>{item.note}</div></div>))}</div>);
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
+const WORDS=["IRON","STEEL","PLANK","SQUAT","LUNGE","PRESS","RIDGE","BLAZE","STORM","FORGE","STONE","SWIFT","BRAVO","CEDAR","CLIFF","DELTA","EAGLE","FLINT","GROVE","HAWK","MAPLE","NORTH","OCEAN","PIKE","QUEST","RIVER","SAGE","TRAIL","VIGOR","WOLF","BOLT","CREST","DAWN","EMBER","FROST","GRIT","HIKE","JADE","KEEN","LYNX"];
+function generateSyncCode(){return`${WORDS[Math.floor(Math.random()*WORDS.length)]}-${WORDS[Math.floor(Math.random()*WORDS.length)]}-${Math.floor(1000+Math.random()*9000)}`}
+const SYNC_CODE_KEY="workout-sync-code",LOCAL_DATA_KEY="workout-progress-v4";
+const IS={width:"100%",padding:".45rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".95rem",fontFamily:"inherit",outline:"none",marginTop:".15rem",background:"#fafaf8"};
+
+// ═══ ROUTINE DEFINITIONS ═══
+const ROUTINES={
+"sc":{
+  name:"Strength & Cardio",short:"S&C",icon:"🏋️",color:"#2d5a3d",
+  desc:"3 days/week • 30–45 min • Bodyweight + dumbbells",
+  days:{
+    day1:{label:"Day 1",title:"Upper Body + Core",color:"#2d5a3d",bg:"#e8f0eb",
+      warmup:[{name:"Arm Circles",sets:"30s each dir",note:"Extend arms, small→wide circles. Reverse after 30s."},{name:"Shoulder Pass-Throughs",sets:"10 reps",note:"Towel wide overhead and behind back. Arms straight."},{name:"Cat-Cow",sets:"8 reps",note:"Hands & knees. Inhale: belly drops. Exhale: round spine."}],
+      exercises:[
+        {id:"pushups",name:"Push-Ups",target:"2–3 × 10–15",unit:"reps",note:"Hands shoulder-width, body straight. Modification: hands on counter."},
+        {id:"rows",name:"DB Bent-Over Row",target:"2–3 × 12 ea.",unit:"reps",hasWeight:true,note:"Hinge 45° at hips. Pull dumbbell to hip. Start 10–15 lb."},
+        {id:"pike",name:"Pike Push-Up / DB Press",target:"2–3 × 8–12",unit:"reps",note:"Downward-dog push-up. Easier: DB overhead press 8–12 lb."},
+        {id:"plank",name:"Plank Hold",target:"2–3 × 30–60s",unit:"sec",note:"Forearms down, squeeze glutes, brace core. Start 30s."},
+        {id:"deadbug",name:"Dead Bug",target:"2–3 × 10 ea.",unit:"reps",note:"On back, lower opposite arm/leg slowly. Lower back stays on floor."},
+        {id:"curl",name:"DB Bicep Curl",target:"2–3 × 12–15",unit:"reps",hasWeight:true,note:"Curl to shoulders, elbows pinned. 3s down. 8–15 lb."}],
+      cooldown:[{name:"Doorway Chest Stretch",sets:"30s each side",note:"Forearm on frame, step through."},{name:"Cross-Body Shoulder Stretch",sets:"30s each arm",note:"Pull arm across chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist."},{name:"Child's Pose",sets:"60s",note:"Kneel, sit back, arms forward. Breathe."}]},
+    day3:{label:"Day 3",title:"Lower Body + Core",color:"#2d5a3d",bg:"#e8f0eb",
+      warmup:[{name:"Bodyweight Squats",sets:"10 slow reps",note:"Shoulder-width, sit back. Control."},{name:"Leg Swings",sets:"10 ea. leg, ea. dir",note:"Hold wall. Forward/back, side/side."},{name:"Ankle Circles",sets:"10 ea. dir, ea. foot",note:"Rotate ankle in circles."}],
+      exercises:[
+        {id:"goblet",name:"Goblet Squat",target:"2–3 × 12–15",unit:"reps",hasWeight:true,note:"DB at chest 10–25 lb. Chest up, weight in heels."},
+        {id:"lunge",name:"Reverse Lunge",target:"2–3 × 10 ea.",unit:"reps",note:"Step back, lower knee. Front knee over ankle."},
+        {id:"bridge",name:"Glute Bridge",target:"2–3 × 15",unit:"reps",note:"Drive hips up, squeeze glutes 2s. Progress: single-leg."},
+        {id:"wallsit",name:"Wall Sit",target:"2–3 × 30–45s",unit:"sec",note:"Back on wall, thighs parallel. Hold."},
+        {id:"calf",name:"Calf Raises",target:"2–3 × 15–20",unit:"reps",note:"Rise on toes, 1s hold, lower slowly."},
+        {id:"legraise",name:"Side-Lying Leg Raise",target:"2–3 × 12 ea.",unit:"reps",note:"Lift top leg 45°, hips square."}],
+      cooldown:[{name:"Standing Quad Stretch",sets:"30s each leg",note:"Grab ankle behind, pull to glute."},{name:"Figure-Four Hip Stretch",sets:"30s each side",note:"Cross ankle over knee, pull thigh to chest."},{name:"Downward Dog",sets:"45s",note:"Inverted V, pedal feet."},{name:"Seated Forward Fold",sets:"45s",note:"Hinge at hips toward toes."}]},
+    day5:{label:"Day 5",title:"Cardio + Flow",color:"#c4713b",bg:"#fdf3ec",
+      warmup:[{name:"March in Place",sets:"60s",note:"Knees to hip height, pump arms."},{name:"Arm Circles + Twists",sets:"30s each",note:"Quick circles, then torso rotation."}],
+      exercises:[
+        {id:"walk",name:"Brisk Walk / Jog",target:"45s/15s rest",unit:"rounds",note:"Moderate pace. Pump arms."},
+        {id:"stepup",name:"Step-Ups",target:"45s/15s rest",unit:"rounds",note:"6–12 inch step. Alternate lead leg."},
+        {id:"jacks",name:"Jumping Jacks",target:"45s/15s rest",unit:"rounds",note:"Low-impact: stepping jacks."},
+        {id:"climbers",name:"Mountain Climbers",target:"45s/15s rest",unit:"rounds",note:"Push-up position, alternate knees. ~1/sec."},
+        {id:"highknees",name:"High Knees",target:"45s/15s rest",unit:"rounds",note:"March with high knees. Height > speed."},
+        {id:"flow",name:"Flexibility Flow",target:"12–15 min",unit:"min",note:"Sun salutations → Warriors → Pigeon → Twist → Child's pose."}],
+      cooldown:[{name:"Pigeon Pose",sets:"45s each side",note:"Deep hip stretch."},{name:"Hamstring Stretch",sets:"30s each leg",note:"On back, lift leg, hold behind thigh."},{name:"Child's Pose",sets:"60s",note:"Final rest. Breathe deeply."}]}
+  }
+},
+"mstf":{
+  name:"Deep Fitness (MSTF)",short:"MSTF",icon:"🧘",color:"#5b3a8c",
+  desc:"2 days/week • 30 min • Slow reps to failure",
+  days:{
+    workoutA:{label:"Workout A",title:"Full Body — Upper Focus",color:"#5b3a8c",bg:"#f0ecf5",
+      warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
+      exercises:[
+        {id:"m_pushup",name:"Slow Push-Up",target:"1 set to failure",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier."},
+        {id:"m_row",name:"Resistance Band Row",target:"1 set to failure",unit:"tul",note:"Anchor band at chest height. Pull handles to ribs over 10 sec, squeeze shoulder blades, return over 10 sec. Elbows close. To failure."},
+        {id:"m_press",name:"Resistance Band Overhead Press",target:"1 set to failure",unit:"tul",note:"Stand on band, press handles overhead over 10 sec, lower over 10 sec. Don't lock out. Core braced. To failure."},
+        {id:"m_squat",name:"Slow Bodyweight Squat",target:"1 set to failure",unit:"tul",note:"10 sec to lower, pause at bottom, 10 sec to rise. Don't lock knees at top. Keep tension constant. Weight in heels. To failure."},
+        {id:"m_fly",name:"Resistance Band Chest Fly",target:"1 set to failure",unit:"tul",note:"Anchor band behind you at chest height. Arms slightly bent, bring handles together over 10 sec, return over 10 sec. To failure."},
+        {id:"m_curl",name:"Resistance Band Bicep Curl",target:"1 set to failure",unit:"tul",note:"Stand on band. Curl over 10 sec, lower over 10 sec. Elbows pinned to ribs. No swinging. To failure."},
+        {id:"m_plank",name:"Plank to Failure",target:"1 set to failure",unit:"tul",note:"Forearms down, body straight. Breathe steadily. Hold with full attention until you physically cannot maintain form."}],
+      cooldown:[{name:"Standing Forward Fold",sets:"45s",note:"Bend at hips, let arms hang. Breathe into hamstrings."},{name:"Chest Opener",sets:"30s",note:"Clasp hands behind back, lift gently. Open chest."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice where your muscles are working. Breathe into each area."}]},
+    workoutB:{label:"Workout B",title:"Full Body — Lower Focus",color:"#5b3a8c",bg:"#f0ecf5",
+      warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
+      exercises:[
+        {id:"m_wallsit",name:"Slow Wall Sit",target:"1 set to failure",unit:"tul",note:"Back on wall. Lower over 10 sec to thighs parallel. Hold. When burning, breathe and stay present. To failure."},
+        {id:"m_bridge",name:"Slow Glute Bridge",target:"1 set to failure",unit:"tul",note:"10 sec to raise hips, squeeze 2 sec at top, 10 sec to lower. Don't touch floor between reps. To failure."},
+        {id:"m_lunge",name:"Slow Reverse Lunge",target:"1 set to failure ea.",unit:"tul",note:"10 sec to step back and lower, 10 sec to return. One leg at a time, full set then switch. To failure."},
+        {id:"m_calf",name:"Slow Calf Raise",target:"1 set to failure",unit:"tul",note:"10 sec up, hold 2 sec at peak, 10 sec down. Don't bounce at bottom. Single leg for more challenge. To failure."},
+        {id:"m_pushup2",name:"Slow Push-Up",target:"1 set to failure",unit:"tul",note:"Same as Workout A. 10 sec down, 10 sec up. Full attention. To failure."},
+        {id:"m_pullap",name:"Resistance Band Pull-Apart",target:"1 set to failure",unit:"tul",note:"Hold band at chest width, arms straight. Pull apart over 10 sec, return over 10 sec. Squeeze shoulder blades. To failure."},
+        {id:"m_deadbug",name:"Slow Dead Bug",target:"1 set to failure",unit:"tul",note:"On back. Extend opposite arm/leg over 10 sec, return over 10 sec. Lower back pinned to floor. To failure."}],
+      cooldown:[{name:"Figure-Four Stretch",sets:"45s each side",note:"On back, cross ankle over knee, pull thigh to chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist gently."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice each muscle group. Breathe gratitude into your body."}]}
+  }
+}};
+
+// ═══ SYNC CODE SCREEN ═══
+function SyncCodeScreen({onCodeSet}){
+  const[mode,setMode]=useState(null);const[ic,setIc]=useState("");const[err,setErr]=useState("");
+  const createNew=()=>{const c=generateSyncCode();localStorage.setItem(SYNC_CODE_KEY,c);onCodeSet(c)};
+  const join=async()=>{const c=ic.trim().toUpperCase();if(!c||c.split("-").length<2){setErr("Enter a valid sync code");return}
+    try{const d=await db.collection("trackers").doc(c).get();if(!d.exists){setErr("No tracker found with that code.");return}localStorage.setItem(SYNC_CODE_KEY,c);onCodeSet(c)}catch(e){setErr("Connection error.")}};
+  return(<div style={{padding:"2rem 1.5rem",maxWidth:440,margin:"0 auto"}}>
+    <div style={{textAlign:"center",marginBottom:"2rem"}}><div style={{fontSize:"3rem"}}>💪</div><h1 style={{fontSize:"1.5rem",color:"#2d5a3d",margin:".5rem 0 .25rem"}}>Workout Tracker</h1><p style={{color:"#999",fontSize:".88rem"}}>Syncs across all your devices</p></div>
+    {mode===null&&<div style={{display:"flex",flexDirection:"column",gap:".75rem"}}>
+      <button onClick={createNew} style={{padding:"1.1rem",border:"none",borderRadius:"12px",background:"#2d5a3d",color:"#fff",fontSize:"1rem",fontWeight:700,cursor:"pointer"}}>Start Fresh</button>
+      <button onClick={()=>setMode("existing")} style={{padding:"1.1rem",border:"2px solid #2d5a3d",borderRadius:"12px",background:"#fff",color:"#2d5a3d",fontSize:"1rem",fontWeight:700,cursor:"pointer"}}>I Have a Sync Code</button></div>}
+    {mode==="existing"&&<div style={{background:"#fff",borderRadius:"12px",padding:"1.25rem",boxShadow:"0 2px 12px rgba(0,0,0,.06)"}}>
+      <div style={{fontWeight:700,marginBottom:".75rem"}}>Enter your sync code</div>
+      <input type="text" value={ic} onChange={e=>{setIc(e.target.value.toUpperCase());setErr("")}} placeholder="IRON-WOLF-4821" style={{...IS,fontSize:"1.1rem",textAlign:"center",letterSpacing:".05em",padding:".7rem",textTransform:"uppercase"}} autoFocus autoCapitalize="characters" autoCorrect="off"/>
+      {err&&<div style={{color:"#c0392b",fontSize:".82rem",marginTop:".5rem"}}>{err}</div>}
+      <div style={{display:"flex",gap:".5rem",marginTop:"1rem"}}>
+        <button onClick={()=>setMode(null)} style={{flex:1,padding:".7rem",border:"1px solid #ddd",borderRadius:"8px",background:"#fff",cursor:"pointer",fontWeight:600,fontSize:".9rem"}}>Back</button>
+        <button onClick={join} style={{flex:2,padding:".7rem",border:"none",borderRadius:"8px",background:"#2d5a3d",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:".9rem"}}>Connect</button></div></div>}
+  </div>);
+}
+
+// ═══ MAIN APP ═══
+function App(){
+  const[syncCode,setSyncCode]=useState(()=>localStorage.getItem(SYNC_CODE_KEY));
+  const[page,setPage]=useState("tracker");
+  const[routine,setRoutine]=useState(()=>localStorage.getItem("workout-routine")||"sc");
+  const changeRoutine=(r)=>{setRoutine(r);localStorage.setItem("workout-routine",r)};
+  if(!syncCode)return<SyncCodeScreen onCodeSet={setSyncCode}/>;
+  const R=ROUTINES[routine];const themeColor=R.color;
+  return(<div style={{paddingBottom:"4rem"}}>
+    {page==="tracker"?<Tracker syncCode={syncCode} setSyncCode={setSyncCode} routine={routine} setRoutine={changeRoutine}/>:
+     page==="plan"?<PlanView routine={routine}/>:
+     <RoutinePicker routine={routine} setRoutine={changeRoutine} setPage={setPage}/>}
+    <div className="bottom-tabs">
+      <button className={page==="tracker"?"active":""} onClick={()=>setPage("tracker")}><span className="tab-icon">📝</span>Tracker</button>
+      <button className={page==="plan"?"active":""} onClick={()=>setPage("plan")}><span className="tab-icon">📋</span>Exercises</button>
+      <button className={page==="routines"?"active":""} onClick={()=>setPage("routines")}><span className="tab-icon">🔄</span>Routines</button>
+    </div></div>);
+}
+
+// ═══ ROUTINE PICKER ═══
+function RoutinePicker({routine,setRoutine,setPage}){
+  return(<div>
+    <div style={{background:"#2d5a3d",color:"#fff",padding:"1.25rem 1rem",textAlign:"center"}}>
+      <div style={{fontSize:"1.35rem",fontWeight:700}}>Choose Routine</div></div>
+    <div style={{padding:"1rem"}}>
+      {Object.entries(ROUTINES).map(([key,r])=>(
+        <button key={key} onClick={()=>{setRoutine(key);setPage("tracker")}} style={{
+          width:"100%",padding:"1.25rem",marginBottom:".75rem",border:routine===key?`3px solid ${r.color}`:"2px solid #e0dbd5",
+          borderRadius:"14px",background:"#fff",cursor:"pointer",textAlign:"left",boxShadow:"0 2px 8px rgba(0,0,0,.06)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:".6rem",marginBottom:".3rem"}}>
+            <span style={{fontSize:"1.5rem"}}>{r.icon}</span>
+            <span style={{fontSize:"1.1rem",fontWeight:700,color:r.color}}>{r.name}</span>
+            {routine===key&&<span style={{fontSize:".7rem",background:r.color,color:"#fff",padding:".15rem .5rem",borderRadius:"10px",fontWeight:600,marginLeft:"auto"}}>ACTIVE</span>}
+          </div>
+          <div style={{fontSize:".85rem",color:"#777"}}>{r.desc}</div>
+        </button>))}
+      <div style={{textAlign:"center",color:"#999",fontSize:".82rem",padding:"1rem",lineHeight:1.6}}>
+        Each routine tracks progress independently. Switching routines won't erase your data — you can go back anytime.
+      </div>
+    </div></div>);
+}
+
+// ═══ TRACKER ═══
+function Tracker({syncCode,setSyncCode,routine,setRoutine}){
+  const R=ROUTINES[routine];const dayKeys=Object.keys(R.days);
+  const[data,setData]=useState({startDate:new Date().toISOString().split("T")[0],routines:{}});
+  const[currentWeek,setCurrentWeek]=useState(1);
+  const[activeDay,setActiveDay]=useState(dayKeys[0]);
+  const[view,setView]=useState("log");
+  const[synced,setSynced]=useState(false);
+  const[showSync,setShowSync]=useState(false);
+  const saveTimeout=useRef(null);
+
+  useEffect(()=>{setActiveDay(dayKeys[0])},[routine]);
+
+  useEffect(()=>{
+    if(!syncCode)return;
+    const unsub=db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
+      if(doc.exists){const r=doc.data();setData(r);
+        if(r.startDate){const s=new Date(r.startDate),n=new Date(),d=Math.floor((n-s)/(7*24*60*60*1000));setCurrentWeek(Math.max(1,d+1))}
+        setSynced(true)}else{
+        const init={startDate:new Date().toISOString().split("T")[0],routines:{}};
+        db.collection("trackers").doc(syncCode).set(init);setData(init);setSynced(true)}
+    },()=>setSynced(false));
+    return()=>unsub();
+  },[syncCode]);
+
+  const save=useCallback(nd=>{setData(nd);try{localStorage.setItem(LOCAL_DATA_KEY,JSON.stringify(nd))}catch{}
+    if(saveTimeout.current)clearTimeout(saveTimeout.current);
+    saveTimeout.current=setTimeout(()=>{db.collection("trackers").doc(syncCode).set(nd).catch(()=>{})},500)},[syncCode]);
+
+  const rData=data?.routines?.[routine]||{};
+  const getDayDate=(w,d)=>rData?.weeks?.[`w${w}`]?.[d]?._date||"";
+  const setDayDate=v=>{const nd=JSON.parse(JSON.stringify(data));const wk=`w${currentWeek}`;
+    if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
+    if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
+    nd.routines[routine].weeks[wk][activeDay]._date=v;save(nd)};
+  const getEntry=(w,d,exId)=>rData?.weeks?.[`w${w}`]?.[d]?.[exId]||{};
+  const updateEntry=(exId,field,value)=>{const nd=JSON.parse(JSON.stringify(data));const wk=`w${currentWeek}`;
+    if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
+    if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
+    if(!nd.routines[routine].weeks[wk][activeDay][exId])nd.routines[routine].weeks[wk][activeDay][exId]={};
+    nd.routines[routine].weeks[wk][activeDay][exId][field]=value;save(nd)};
+  const isDayComplete=(w,d)=>{const dd=rData?.weeks?.[`w${w}`]?.[d];if(!dd)return false;return R.days[d].exercises.every(ex=>dd[ex.id]?.done)};
+  const getWC=w=>dayKeys.filter(d=>isDayComplete(w,d)).length;
+  const resetData=()=>{if(confirm("Erase ALL progress for this routine?")){const nd=JSON.parse(JSON.stringify(data));nd.routines[routine]={weeks:{}};save(nd);setCurrentWeek(1)}};
+  const disconnect=()=>{if(confirm("Disconnect this device?")){localStorage.removeItem(SYNC_CODE_KEY);localStorage.removeItem(LOCAL_DATA_KEY);setSyncCode(null)}};
+
+  const plan=R.days[activeDay];const cw=getWC(currentWeek);const isMSTF=routine==="mstf";
+  const pastWeeks=[];for(let w=currentWeek-1;w>=1;w--){if(rData?.weeks?.[`w${w}`])pastWeeks.push(w)}
+
+  return(<div>
+    <div style={{background:R.color,color:"#fff",padding:"1.25rem 1rem 1rem",textAlign:"center"}}>
+      <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:".5rem"}}>
+        <span style={{fontSize:"1.35rem",fontWeight:700}}>{R.short} Tracker</span>
+        <span className={`sync-badge ${synced?"online":"offline"}`}><span style={{width:6,height:6,borderRadius:"50%",background:synced?"#2e7d32":"#e65100",animation:synced?"none":"pulse 1.5s infinite"}}></span>{synced?"synced":"offline"}</span></div>
+      <div style={{fontSize:".82rem",opacity:.8,marginTop:".2rem"}}>Week {currentWeek} • {cw}/{dayKeys.length} sessions
+        <span onClick={()=>setShowSync(!showSync)} style={{marginLeft:8,cursor:"pointer",textDecoration:"underline",opacity:.7}}>sync code</span></div></div>
+
+    {showSync&&<div style={{background:"#fff",padding:"1rem",borderBottom:"1px solid #e0dbd5",textAlign:"center"}}>
+      <div style={{fontSize:".78rem",color:"#999",marginBottom:".3rem"}}>Your sync code:</div>
+      <div style={{fontSize:"1.3rem",fontWeight:700,letterSpacing:".08em",color:R.color,fontFamily:"monospace"}}>{syncCode}</div>
+      <button onClick={disconnect} style={{marginTop:".6rem",border:"1px solid #ddd",background:"none",color:"#999",padding:".3rem 1rem",borderRadius:"6px",fontSize:".75rem",cursor:"pointer"}}>Disconnect device</button></div>}
+
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"1rem",padding:".75rem 1rem",background:"#fff",borderBottom:"1px solid #e0dbd5"}}>
+      <button onClick={()=>setCurrentWeek(Math.max(1,currentWeek-1))} disabled={currentWeek<=1} style={{border:"none",background:"none",fontSize:"1.2rem",cursor:currentWeek>1?"pointer":"default",opacity:currentWeek>1?1:.3,padding:".25rem .5rem"}}>◀</button>
+      <span style={{fontWeight:600,fontSize:".95rem"}}>Week {currentWeek}</span>
+      <button onClick={()=>setCurrentWeek(currentWeek+1)} style={{border:"none",background:"none",fontSize:"1.2rem",cursor:"pointer",padding:".25rem .5rem"}}>▶</button></div>
+
+    <div style={{display:"flex",gap:".5rem",padding:".75rem 1rem"}}>
+      {["log","history"].map(v=><button key={v} onClick={()=>setView(v)} style={{flex:1,padding:".5rem",border:"none",borderRadius:"8px",fontWeight:600,fontSize:".85rem",cursor:"pointer",background:view===v?R.color:"#fff",color:view===v?"#fff":R.color,boxShadow:view===v?"none":"0 1px 4px rgba(0,0,0,.08)"}}>{v==="log"?"📝 Log":"📊 History"}</button>)}</div>
+
+    {view==="log"?<>
+      <div style={{display:"flex",gap:".4rem",padding:"0 1rem .75rem"}}>
+        {dayKeys.map(key=>{const day=R.days[key];const comp=isDayComplete(currentWeek,key);const dd=getDayDate(currentWeek,key);
+          return(<button key={key} onClick={()=>setActiveDay(key)} style={{flex:1,padding:".6rem .25rem",border:activeDay===key?`2px solid ${day.color}`:"2px solid transparent",borderRadius:"10px",cursor:"pointer",fontSize:".75rem",fontWeight:600,textAlign:"center",background:activeDay===key?day.bg:"#fff",color:day.color,boxShadow:"0 1px 4px rgba(0,0,0,.06)",position:"relative"}}>
+            {comp&&<span style={{position:"absolute",top:3,right:6,fontSize:".7rem"}}>✅</span>}
+            <div>{day.label}</div><div style={{fontSize:".65rem",fontWeight:400,opacity:.75,marginTop:1}}>{day.title}</div>
+            {dd&&<div style={{fontSize:".6rem",fontWeight:400,opacity:.55,marginTop:1}}>{new Date(dd+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"})}</div>}
+          </button>)})}
+      </div>
+
+      <div style={{padding:"0 1rem .75rem"}}><div style={{background:"#fff",borderRadius:"10px",padding:".65rem 1rem",boxShadow:"0 1px 4px rgba(0,0,0,.06)",display:"flex",alignItems:"center",gap:".6rem"}}>
+        <span style={{fontSize:".82rem",fontWeight:600,color:"#666",whiteSpace:"nowrap"}}>📅 Date:</span>
+        <input type="date" value={getDayDate(currentWeek,activeDay)||new Date().toISOString().split("T")[0]} onChange={e=>setDayDate(e.target.value)} style={{flex:1,padding:".4rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".9rem",fontFamily:"inherit",background:"#fafaf8",outline:"none"}}/></div></div>
+
+      {isMSTF&&<div style={{margin:"0 1rem .75rem",padding:".6rem .85rem",background:"#f0ecf5",borderRadius:"8px",fontSize:".78rem",color:"#5b3a8c",lineHeight:1.5}}>
+        <strong>MSTF tempo:</strong> 10 sec up, 10 sec down. 1 set to failure. Track your Time Under Load (TUL) in seconds.</div>}
+
+      <div style={{padding:"0 1rem"}}>
+        {plan.exercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);
           return(<div key={ex.id} style={{background:"#fff",borderRadius:"12px",padding:".9rem 1rem",marginBottom:".65rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",borderLeft:`4px solid ${entry.done?"#4caf50":plan.color}`,opacity:entry.done?.85:1}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:".5rem"}}>
               <div><div style={{fontWeight:700,fontSize:".95rem"}}>{ex.name}</div><div style={{fontSize:".78rem",color:"#888",marginTop:1}}>{ex.target}</div></div>
