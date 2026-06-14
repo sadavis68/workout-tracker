@@ -79,28 +79,28 @@ const ROUTINES={
 },
 "mstf":{
   name:"Deep Fitness (MSTF)",short:"MSTF",icon:"🧘",color:"#5b3a8c",
-  desc:"2 days/week • 30 min • Slow reps to failure",
+  desc:"2 days/week • 30 min • Band, DB, or bodyweight",
   days:{
     workoutA:{label:"Workout A",title:"Full Body — Upper Focus",color:"#5b3a8c",bg:"#f0ecf5",
       warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
       exercises:[
         {id:"m_pushup",name:"Slow Push-Up",target:"1 set to failure",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier."},
-        {id:"m_row",name:"Resistance Band Row",target:"1 set to failure",unit:"tul",note:"Anchor band at chest height. Pull handles to ribs over 10 sec, squeeze shoulder blades, return over 10 sec. Elbows close. To failure."},
-        {id:"m_press",name:"Resistance Band Overhead Press",target:"1 set to failure",unit:"tul",note:"Stand on band, press handles overhead over 10 sec, lower over 10 sec. Don't lock out. Core braced. To failure."},
-        {id:"m_squat",name:"Slow Bodyweight Squat",target:"1 set to failure",unit:"tul",note:"10 sec to lower, pause at bottom, 10 sec to rise. Don't lock knees at top. Keep tension constant. Weight in heels. To failure."},
-        {id:"m_fly",name:"Resistance Band Chest Fly",target:"1 set to failure",unit:"tul",note:"Anchor band behind you at chest height. Arms slightly bent, bring handles together over 10 sec, return over 10 sec. To failure."},
-        {id:"m_curl",name:"Resistance Band Bicep Curl",target:"1 set to failure",unit:"tul",note:"Stand on band. Curl over 10 sec, lower over 10 sec. Elbows pinned to ribs. No swinging. To failure."},
+        {id:"m_row",name:"Slow Row",target:"1 set to failure",unit:"tul",hasWeight:true,note:"Band: anchor at chest height, pull to ribs over 10 sec, return over 10 sec. DB: hinge 45° at hips, pull dumbbell to hip over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
+        {id:"m_press",name:"Slow Overhead Press",target:"1 set to failure",unit:"tul",hasWeight:true,note:"Band: stand on band, press overhead over 10 sec, lower over 10 sec. DB: press dumbbells from shoulders overhead over 10 sec, lower over 10 sec. Don't lock out. Core braced. To failure."},
+        {id:"m_squat",name:"Slow Squat",target:"1 set to failure",unit:"tul",hasWeight:true,note:"10 sec to lower, pause at bottom, 10 sec to rise. Don't lock knees at top. Keep tension constant. Weight in heels. DB option: hold dumbbell at chest (goblet style) for added resistance. To failure."},
+        {id:"m_fly",name:"Slow Chest Fly",target:"1 set to failure",unit:"tul",hasWeight:true,note:"Band: anchor behind at chest height, bring handles together over 10 sec, return over 10 sec. DB: lie on floor, arms slightly bent, lower dumbbells out to sides over 10 sec, bring together over 10 sec. To failure."},
+        {id:"m_curl",name:"Slow Bicep Curl",target:"1 set to failure",unit:"tul",hasWeight:true,note:"Band: stand on band, curl over 10 sec, lower over 10 sec. DB: curl dumbbells over 10 sec, lower over 10 sec. Elbows pinned to ribs. No swinging. To failure."},
         {id:"m_plank",name:"Plank to Failure",target:"1 set to failure",unit:"tul",note:"Forearms down, body straight. Breathe steadily. Hold with full attention until you physically cannot maintain form."}],
       cooldown:[{name:"Standing Forward Fold",sets:"45s",note:"Bend at hips, let arms hang. Breathe into hamstrings."},{name:"Chest Opener",sets:"30s",note:"Clasp hands behind back, lift gently. Open chest."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice where your muscles are working. Breathe into each area."}]},
     workoutB:{label:"Workout B",title:"Full Body — Lower Focus",color:"#5b3a8c",bg:"#f0ecf5",
       warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
       exercises:[
-        {id:"m_wallsit",name:"Slow Wall Sit",target:"1 set to failure",unit:"tul",note:"Back on wall. Lower over 10 sec to thighs parallel. Hold. When burning, breathe and stay present. To failure."},
-        {id:"m_bridge",name:"Slow Glute Bridge",target:"1 set to failure",unit:"tul",note:"10 sec to raise hips, squeeze 2 sec at top, 10 sec to lower. Don't touch floor between reps. To failure."},
-        {id:"m_lunge",name:"Slow Reverse Lunge",target:"1 set to failure ea.",unit:"tul",note:"10 sec to step back and lower, 10 sec to return. One leg at a time, full set then switch. To failure."},
-        {id:"m_calf",name:"Slow Calf Raise",target:"1 set to failure",unit:"tul",note:"10 sec up, hold 2 sec at peak, 10 sec down. Don't bounce at bottom. Single leg for more challenge. To failure."},
+        {id:"m_wallsit",name:"Slow Wall Sit",target:"1 set to failure",unit:"tul",hasWeight:true,note:"Back on wall. Lower over 10 sec to thighs parallel. Hold. When burning, breathe and stay present. DB option: hold a dumbbell at chest for added load. To failure."},
+        {id:"m_bridge",name:"Slow Glute Bridge",target:"1 set to failure",unit:"tul",hasWeight:true,note:"10 sec to raise hips, squeeze 2 sec at top, 10 sec to lower. Don't touch floor between reps. DB option: rest a dumbbell on hips for added resistance. To failure."},
+        {id:"m_lunge",name:"Slow Reverse Lunge",target:"1 set to failure ea.",unit:"tul",hasWeight:true,note:"10 sec to step back and lower, 10 sec to return. One leg at a time, full set then switch. DB option: hold dumbbells at sides or one at chest. To failure."},
+        {id:"m_calf",name:"Slow Calf Raise",target:"1 set to failure",unit:"tul",hasWeight:true,note:"10 sec up, hold 2 sec at peak, 10 sec down. Don't bounce at bottom. DB option: hold a dumbbell in one hand, wall for balance with the other. To failure."},
         {id:"m_pushup2",name:"Slow Push-Up",target:"1 set to failure",unit:"tul",note:"Same as Workout A. 10 sec down, 10 sec up. Full attention. To failure."},
-        {id:"m_pullap",name:"Resistance Band Pull-Apart",target:"1 set to failure",unit:"tul",note:"Hold band at chest width, arms straight. Pull apart over 10 sec, return over 10 sec. Squeeze shoulder blades. To failure."},
+        {id:"m_pullap",name:"Slow Reverse Fly",target:"1 set to failure",unit:"tul",hasWeight:true,note:"Band: hold at chest width, pull apart over 10 sec, return over 10 sec. DB: hinge forward 45°, raise dumbbells out to sides over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
         {id:"m_deadbug",name:"Slow Dead Bug",target:"1 set to failure",unit:"tul",note:"On back. Extend opposite arm/leg over 10 sec, return over 10 sec. Lower back pinned to floor. To failure."}],
       cooldown:[{name:"Figure-Four Stretch",sets:"45s each side",note:"On back, cross ankle over knee, pull thigh to chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist gently."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice each muscle group. Breathe gratitude into your body."}]}
   }
@@ -254,7 +254,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
         <input type="date" value={getDayDate(currentWeek,activeDay)||new Date().toISOString().split("T")[0]} onChange={e=>setDayDate(e.target.value)} style={{flex:1,padding:".4rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".9rem",fontFamily:"inherit",background:"#fafaf8",outline:"none"}}/></div></div>
 
       {isMSTF&&<div style={{margin:"0 1rem .75rem",padding:".6rem .85rem",background:"#f0ecf5",borderRadius:"8px",fontSize:".78rem",color:"#5b3a8c",lineHeight:1.5}}>
-        <strong>MSTF tempo:</strong> 10 sec up, 10 sec down. 1 set to failure. Track your Time Under Load (TUL) in seconds.</div>}
+        <strong>MSTF tempo:</strong> 10 sec up, 10 sec down. 1 set to failure. Use bands, dumbbells, or bodyweight. Track Time Under Load (TUL) in seconds.</div>}
 
       <div style={{padding:"0 1rem"}}>
         {plan.exercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);
@@ -271,7 +271,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
                 <input type="number" inputMode="decimal" value={entry.weight||""} onChange={e=>updateEntry(ex.id,"weight",e.target.value)} placeholder="—" style={IS}/></div>}
             </div>
             <div style={{marginTop:".4rem"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Notes</label>
-              <input type="text" value={entry.notes||""} onChange={e=>updateEntry(ex.id,"notes",e.target.value)} placeholder={isMSTF?"Reached failure? Band tension?":"How did it feel?"} style={{...IS,fontSize:".82rem"}}/></div>
+              <input type="text" value={entry.notes||""} onChange={e=>updateEntry(ex.id,"notes",e.target.value)} placeholder={isMSTF?"Reached failure? Band/DB/BW? Weight?":"How did it feel?"} style={{...IS,fontSize:".82rem"}}/></div>
           </div>)})}
       </div>
     </>:
@@ -312,7 +312,7 @@ function PlanView({routine}){
       <div style={{fontSize:"1.35rem",fontWeight:700}}>{R.short} Exercise Guide</div>
       <div style={{fontSize:".82rem",opacity:.8,marginTop:".2rem"}}>Tap a day for full instructions</div></div>
     <div style={{margin:"1rem",padding:".85rem 1rem",background:isMSTF?"#f0ecf5":"#fdf3ec",borderRadius:"10px",fontSize:".82rem",lineHeight:1.55}}>
-      {isMSTF?<><strong style={{color:"#5b3a8c"}}>MSTF Method:</strong> Every rep takes ~20 seconds (10 up, 10 down). Do 1 set per exercise to complete muscle failure. Rest 30–60 sec between exercises. 2 sessions per week. Alternate Workout A and B. Focus on breathing and body awareness throughout.</>:
+      {isMSTF?<><strong style={{color:"#5b3a8c"}}>MSTF Method:</strong> Every rep takes ~20 seconds (10 up, 10 down). Do 1 set per exercise to complete muscle failure. Rest 30–60 sec between exercises. 2 sessions per week. Alternate Workout A and B. Use resistance bands, dumbbells, or bodyweight — each exercise lists options. Focus on breathing and body awareness throughout.</>:
       <><strong style={{color:"#c4713b"}}>Progression:</strong> Weeks 1–3: 2 rounds. Weeks 4+: 3 rounds. When 15 reps feel easy, slow tempo to 3s down / 1s up before adding weight. Rest 30–45s between exercises, 60–90s between rounds.</>}</div>
     <div style={{padding:"0 1rem"}}>
       {Object.entries(R.days).map(([key,day])=>{const isOpen=openDay===key;
