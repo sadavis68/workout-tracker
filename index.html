@@ -179,12 +179,14 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
   const[synced,setSynced]=useState(false);
   const[showSync,setShowSync]=useState(false);
   const saveTimeout=useRef(null);
+  const lastSaveTime=useRef(0);
 
   useEffect(()=>{setActiveDay(dayKeys[0])},[routine]);
 
   useEffect(()=>{
     if(!syncCode)return;
     const unsub=db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
+      if(Date.now()-lastSaveTime.current<2000){setSynced(true);return}
       if(doc.exists){const r=doc.data();setData(r);
         if(r.startDate){const s=new Date(r.startDate),n=new Date(),d=Math.floor((n-s)/(7*24*60*60*1000));setCurrentWeek(Math.max(1,d+1))}
         setSynced(true)}else{
@@ -194,7 +196,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     return()=>unsub();
   },[syncCode]);
 
-  const save=useCallback(nd=>{setData(nd);try{localStorage.setItem(LOCAL_DATA_KEY,JSON.stringify(nd))}catch{}
+  const save=useCallback(nd=>{setData(nd);lastSaveTime.current=Date.now();try{localStorage.setItem(LOCAL_DATA_KEY,JSON.stringify(nd))}catch{}
     if(saveTimeout.current)clearTimeout(saveTimeout.current);
     saveTimeout.current=setTimeout(()=>{db.collection("trackers").doc(syncCode).set(nd).catch(()=>{})},500)},[syncCode]);
 
