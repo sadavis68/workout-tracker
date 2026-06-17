@@ -53,7 +53,8 @@ const ROUTINES={
         {id:"pike",name:"Pike Push-Up / DB Press",target:"2–3 × 8–12",unit:"reps",note:"Downward-dog push-up. Easier: DB overhead press 8–12 lb."},
         {id:"plank",name:"Plank Hold",target:"2–3 × 30–60s",unit:"sec",note:"Forearms down, squeeze glutes, brace core. Start 30s."},
         {id:"deadbug",name:"Dead Bug",target:"2–3 × 10 ea.",unit:"reps",note:"On back, lower opposite arm/leg slowly. Lower back stays on floor."},
-        {id:"curl",name:"DB Bicep Curl",target:"2–3 × 12–15",unit:"reps",hasWeight:true,note:"Curl to shoulders, elbows pinned. 3s down. 8–15 lb."}],
+        {id:"curl",name:"DB Bicep Curl",target:"2–3 × 12–15",unit:"reps",hasWeight:true,note:"Curl to shoulders, elbows pinned. 3s down. 8–15 lb."},
+        {id:"carry",name:"Farmer's Carry",target:"2–3 × 40–60s",unit:"sec",hasWeight:true,note:"Hold a dumbbell in each hand at your sides. Walk slowly with tall posture, shoulders back and down. Squeeze the handles hard. Builds grip strength, core stability, and posture. Start 15–25 lb each hand."}],
       cooldown:[{name:"Doorway Chest Stretch",sets:"30s each side",note:"Forearm on frame, step through."},{name:"Cross-Body Shoulder Stretch",sets:"30s each arm",note:"Pull arm across chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist."},{name:"Child's Pose",sets:"60s",note:"Kneel, sit back, arms forward. Breathe."}]},
     day3:{label:"Day 3",title:"Lower Body + Core",color:"#2d5a3d",bg:"#e8f0eb",
       warmup:[{name:"Bodyweight Squats",sets:"10 slow reps",note:"Shoulder-width, sit back. Control."},{name:"Leg Swings",sets:"10 ea. leg, ea. dir",note:"Hold wall. Forward/back, side/side."},{name:"Ankle Circles",sets:"10 ea. dir, ea. foot",note:"Rotate ankle in circles."}],
@@ -62,8 +63,8 @@ const ROUTINES={
         {id:"lunge",name:"Reverse Lunge",target:"2–3 × 10 ea.",unit:"reps",note:"Step back, lower knee. Front knee over ankle."},
         {id:"bridge",name:"Glute Bridge",target:"2–3 × 15",unit:"reps",note:"Drive hips up, squeeze glutes 2s. Progress: single-leg."},
         {id:"wallsit",name:"Wall Sit",target:"2–3 × 30–45s",unit:"sec",note:"Back on wall, thighs parallel. Hold."},
-        {id:"calf",name:"Calf Raises",target:"2–3 × 15–20",unit:"reps",note:"Rise on toes, 1s hold, lower slowly."},
-        {id:"legraise",name:"Side-Lying Leg Raise",target:"2–3 × 12 ea.",unit:"reps",note:"Lift top leg 45°, hips square."}],
+        {id:"calf",name:"Single-Leg Calf Raise",target:"2–3 × 12–15 ea.",unit:"reps",note:"Stand on one foot (hold wall for balance). Rise on toes, 1s hold, lower slowly over 3 sec. Do all reps on one leg, then switch. Builds calf strength AND balance simultaneously."},
+        {id:"slrdl",name:"DB Single-Leg Romanian Deadlift",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Hold one dumbbell in opposite hand from standing leg. Hinge forward at hips, extending free leg behind you. Lower DB toward floor keeping back flat. Return to standing. Targets hamstrings, glutes, and balance. Start with 8–10 lb — balance is the real challenge. Touch a wall if needed at first."}],
       cooldown:[{name:"Standing Quad Stretch",sets:"30s each leg",note:"Grab ankle behind, pull to glute."},{name:"Figure-Four Hip Stretch",sets:"30s each side",note:"Cross ankle over knee, pull thigh to chest."},{name:"Downward Dog",sets:"45s",note:"Inverted V, pedal feet."},{name:"Seated Forward Fold",sets:"45s",note:"Hinge at hips toward toes."}]},
     day5:{label:"Day 5",title:"Cardio + Flow",color:"#c4713b",bg:"#fdf3ec",
       warmup:[{name:"March in Place",sets:"60s",note:"Knees to hip height, pump arms."},{name:"Arm Circles + Twists",sets:"30s each",note:"Quick circles, then torso rotation."}],
@@ -74,7 +75,7 @@ const ROUTINES={
         {id:"climbers",name:"Mountain Climbers",target:"45s/15s rest",unit:"rounds",note:"Push-up position, alternate knees. ~1/sec."},
         {id:"highknees",name:"High Knees",target:"45s/15s rest",unit:"rounds",note:"March with high knees. Height > speed."},
         {id:"flow",name:"Flexibility Flow",target:"12–15 min",unit:"min",note:"Sun salutations → Warriors → Pigeon → Twist → Child's pose."}],
-      cooldown:[{name:"Pigeon Pose",sets:"45s each side",note:"Deep hip stretch."},{name:"Hamstring Stretch",sets:"30s each leg",note:"On back, lift leg, hold behind thigh."},{name:"Child's Pose",sets:"60s",note:"Final rest. Breathe deeply."}]}
+      cooldown:[{name:"Pigeon Pose",sets:"45s each side",note:"Deep hip stretch."},{name:"Hamstring Stretch",sets:"30s each leg",note:"On back, lift leg, hold behind thigh."},{name:"Single-Leg Balance Hold",sets:"30s each leg",note:"Stand on one foot, eyes open. When that's easy, close your eyes. Builds the balance and proprioception that prevents falls as you age. Do this barefoot if possible."},{name:"Child's Pose",sets:"60s",note:"Final rest. Breathe deeply."}]}
   }
 },
 "mstf":{
@@ -90,16 +91,16 @@ const ROUTINES={
         {id:"m_squat",name:"Slow Squat",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to lower, pause at bottom, 10 sec to rise. Don't lock knees at top. Keep tension constant. Weight in heels. DB option: hold dumbbell at chest (goblet style) for added resistance. To failure."},
         {id:"m_fly",name:"Slow Chest Fly",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: anchor behind at chest height, bring handles together over 10 sec, return over 10 sec. DB: lie on floor, arms slightly bent, lower dumbbells out to sides over 10 sec, bring together over 10 sec. To failure."},
         {id:"m_curl",name:"Slow Bicep Curl",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, curl over 10 sec, lower over 10 sec. DB: curl dumbbells over 10 sec, lower over 10 sec. Elbows pinned to ribs. No swinging. To failure."},
-        {id:"m_plank",name:"Plank to Failure",target:"Target: 90–120s TUL",unit:"tul",note:"Forearms down, body straight. Breathe steadily. Hold with full attention until you physically cannot maintain form."}],
+        {id:"m_fhold",name:"Slow Farmer's Hold",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Stand tall holding dumbbells at your sides. Squeeze handles as hard as possible. Shoulders back and down, core braced. Hold with full attention until grip fails. Builds grip strength — one of the strongest predictors of longevity. Start 15–25 lb each hand."}],
       cooldown:[{name:"Standing Forward Fold",sets:"45s",note:"Bend at hips, let arms hang. Breathe into hamstrings."},{name:"Chest Opener",sets:"30s",note:"Clasp hands behind back, lift gently. Open chest."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice where your muscles are working. Breathe into each area."}]},
     workoutB:{label:"Workout B",title:"Full Body — Lower Focus",color:"#5b3a8c",bg:"#f0ecf5",
       warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
       exercises:[
-        {id:"m_wallsit",name:"Slow Wall Sit",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Back on wall. Lower over 10 sec to thighs parallel. Hold. When burning, breathe and stay present. DB option: hold a dumbbell at chest for added load. To failure."},
+        {id:"m_pushup2",name:"Slow Push-Up",target:"Target: 90–120s TUL",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier. Ensures Workout B covers push movement for full-body balance."},
         {id:"m_bridge",name:"Slow Glute Bridge",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to raise hips, squeeze 2 sec at top, 10 sec to lower. Don't touch floor between reps. DB option: rest a dumbbell on hips for added resistance. To failure."},
         {id:"m_lunge",name:"Slow Reverse Lunge",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"10 sec to step back and lower, 10 sec to return. One leg at a time, full set then switch. DB option: hold dumbbells at sides or one at chest. To failure."},
-        {id:"m_calf",name:"Slow Calf Raise",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec up, hold 2 sec at peak, 10 sec down. Don't bounce at bottom. DB option: hold a dumbbell in one hand, wall for balance with the other. To failure."},
-        {id:"m_pushup2",name:"Slow Push-Up",target:"Target: 90–120s TUL",unit:"tul",note:"Same as Workout A. 10 sec down, 10 sec up. Full attention. To failure."},
+        {id:"m_calf",name:"Slow Single-Leg Calf Raise",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"One foot on floor, other lifted. Rise over 10 sec, hold 2 sec, lower over 10 sec. Don't bounce. Wall for balance. DB in one hand for added load. Switch legs. Builds calf strength + balance. To failure."},
+        {id:"m_slrdl",name:"Slow Single-Leg RDL",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Hold DB in opposite hand. Hinge forward over 10 sec, extending free leg behind. Return over 10 sec. Keep back flat, slight knee bend on standing leg. Targets hamstrings, glutes, and balance — three key longevity factors. One leg at a time to failure."},
         {id:"m_pullap",name:"Slow Reverse Fly",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: hold at chest width, pull apart over 10 sec, return over 10 sec. DB: hinge forward 45°, raise dumbbells out to sides over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
         {id:"m_deadbug",name:"Slow Dead Bug",target:"Target: 90–120s TUL",unit:"tul",note:"On back. Extend opposite arm/leg over 10 sec, return over 10 sec. Lower back pinned to floor. To failure."}],
       cooldown:[{name:"Figure-Four Stretch",sets:"45s each side",note:"On back, cross ankle over knee, pull thigh to chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist gently."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice each muscle group. Breathe gratitude into your body."}]}
@@ -179,42 +180,52 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
   const[synced,setSynced]=useState(false);
   const[showSync,setShowSync]=useState(false);
   const saveTimeout=useRef(null);
-  const lastSaveTime=useRef(0);
+  const isEditing=useRef(false);
+  const editTimer=useRef(null);
+  const latestData=useRef(data);
 
   useEffect(()=>{setActiveDay(dayKeys[0])},[routine]);
 
   useEffect(()=>{
     if(!syncCode)return;
     const unsub=db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
-      if(Date.now()-lastSaveTime.current<2000){setSynced(true);return}
-      if(doc.exists){const r=doc.data();setData(r);
+      if(isEditing.current){setSynced(true);return}
+      if(doc.exists){const r=doc.data();latestData.current=r;setData(r);
         if(r.startDate){const s=new Date(r.startDate),n=new Date(),d=Math.floor((n-s)/(7*24*60*60*1000));setCurrentWeek(Math.max(1,d+1))}
         setSynced(true)}else{
         const init={startDate:new Date().toISOString().split("T")[0],routines:{}};
-        db.collection("trackers").doc(syncCode).set(init);setData(init);setSynced(true)}
+        db.collection("trackers").doc(syncCode).set(init);latestData.current=init;setData(init);setSynced(true)}
     },()=>setSynced(false));
     return()=>unsub();
   },[syncCode]);
 
-  const save=useCallback(nd=>{setData(nd);lastSaveTime.current=Date.now();try{localStorage.setItem(LOCAL_DATA_KEY,JSON.stringify(nd))}catch{}
+  const save=useCallback(nd=>{
+    isEditing.current=true;
+    if(editTimer.current)clearTimeout(editTimer.current);
+    editTimer.current=setTimeout(()=>{isEditing.current=false},5000);
+    latestData.current=nd;setData(nd);
+    try{localStorage.setItem(LOCAL_DATA_KEY,JSON.stringify(nd))}catch{}
     if(saveTimeout.current)clearTimeout(saveTimeout.current);
-    saveTimeout.current=setTimeout(()=>{db.collection("trackers").doc(syncCode).set(nd).catch(()=>{})},500)},[syncCode]);
+    saveTimeout.current=setTimeout(()=>{
+      db.collection("trackers").doc(syncCode).set(nd).then(()=>{
+        setTimeout(()=>{isEditing.current=false},1000);
+      }).catch(()=>{})},1500)},[syncCode]);
 
   const rData=data?.routines?.[routine]||{};
   const getDayDate=(w,d)=>rData?.weeks?.[`w${w}`]?.[d]?._date||"";
-  const setDayDate=v=>{const nd=JSON.parse(JSON.stringify(data));const wk=`w${currentWeek}`;
-    if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
+  const setDayDate=v=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
+    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
     if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
     nd.routines[routine].weeks[wk][activeDay]._date=v;save(nd)};
   const getEntry=(w,d,exId)=>rData?.weeks?.[`w${w}`]?.[d]?.[exId]||{};
-  const updateEntry=(exId,field,value)=>{const nd=JSON.parse(JSON.stringify(data));const wk=`w${currentWeek}`;
-    if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
+  const updateEntry=(exId,field,value)=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
+    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
     if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
     if(!nd.routines[routine].weeks[wk][activeDay][exId])nd.routines[routine].weeks[wk][activeDay][exId]={};
     nd.routines[routine].weeks[wk][activeDay][exId][field]=value;save(nd)};
   const isDayComplete=(w,d)=>{const dd=rData?.weeks?.[`w${w}`]?.[d];if(!dd)return false;return R.days[d].exercises.every(ex=>dd[ex.id]?.done)};
   const getWC=w=>dayKeys.filter(d=>isDayComplete(w,d)).length;
-  const resetData=()=>{if(confirm("Erase ALL progress for this routine?")){const nd=JSON.parse(JSON.stringify(data));nd.routines[routine]={weeks:{}};save(nd);setCurrentWeek(1)}};
+  const resetData=()=>{if(confirm("Erase ALL progress for this routine?")){const nd=JSON.parse(JSON.stringify(latestData.current));if(!nd.routines)nd.routines={};nd.routines[routine]={weeks:{}};save(nd);setCurrentWeek(1)}};
   const disconnect=()=>{if(confirm("Disconnect this device?")){localStorage.removeItem(SYNC_CODE_KEY);localStorage.removeItem(LOCAL_DATA_KEY);setSyncCode(null)}};
 
   const plan=R.days[activeDay];const cw=getWC(currentWeek);const isMSTF=routine==="mstf";
@@ -337,7 +348,11 @@ function PlanView({routine}){
         <div style={{fontWeight:700,fontSize:"1rem",color:"#4a6fa5"}}>Rest Days</div>
         <div style={{fontSize:".85rem",color:"#777",marginTop:".4rem",lineHeight:1.55}}>
           {isMSTF?"Rest 3–4 days between sessions. Your muscles grow during recovery, not during the workout. Light walking is fine on off days.":
-          "Take rest days between training days. 20–30 min walk or gentle stretching."}</div></div></div>
+          "Take rest days between training days. 20–30 min walk or gentle stretching."}</div></div>
+      <div style={{background:"#fff",borderRadius:"12px",marginBottom:".75rem",padding:"1rem 1.25rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",border:"1px solid #e0dbd5"}}>
+        <div style={{fontWeight:700,fontSize:"1rem",color:"#c4713b"}}>Nutrition for Strength Span</div>
+        <div style={{fontSize:".85rem",color:"#777",marginTop:".4rem",lineHeight:1.55}}>
+          Aim for 0.7–1g protein per pound of bodyweight daily to support muscle repair and growth. Spread intake across meals — 25–40g per meal is ideal. Good sources: chicken, fish, eggs, Greek yogurt, cottage cheese, whey protein. Without adequate protein, your training can't build the muscle it stimulates. Stay hydrated — dehydration impairs both performance and recovery.</div></div></div>
     <div style={{textAlign:"center",padding:"1rem",color:"#999",fontSize:".78rem",lineHeight:1.7}}>Sharp joint pain → stop & substitute. Consistency beats intensity.</div>
   </div>);
 }
