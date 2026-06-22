@@ -139,9 +139,11 @@ function App(){
   return(<div style={{paddingBottom:"4rem"}}>
     {page==="tracker"?<Tracker syncCode={syncCode} setSyncCode={setSyncCode} routine={routine} setRoutine={changeRoutine}/>:
      page==="plan"?<PlanView routine={routine}/>:
+     page==="progress"?<ProgressView syncCode={syncCode} routine={routine}/>:
      <RoutinePicker routine={routine} setRoutine={changeRoutine} setPage={setPage}/>}
     <div className="bottom-tabs">
       <button className={page==="tracker"?"active":""} onClick={()=>setPage("tracker")}><span className="tab-icon">📝</span>Tracker</button>
+      <button className={page==="progress"?"active":""} onClick={()=>setPage("progress")}><span className="tab-icon">📈</span>Progress</button>
       <button className={page==="plan"?"active":""} onClick={()=>setPage("plan")}><span className="tab-icon">📋</span>Exercises</button>
       <button className={page==="routines"?"active":""} onClick={()=>setPage("routines")}><span className="tab-icon">🔄</span>Routines</button>
     </div></div>);
@@ -218,17 +220,30 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
     nd.routines[routine].weeks[wk][activeDay]._date=v;save(nd)};
   const getEntry=(w,d,exId)=>rData?.weeks?.[`w${w}`]?.[d]?.[exId]||{};
-  const updateEntry=(exId,field,value)=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
+  const updateEntry=(exId,field,value,exDef)=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
     if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
     if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
     if(!nd.routines[routine].weeks[wk][activeDay][exId])nd.routines[routine].weeks[wk][activeDay][exId]={};
-    nd.routines[routine].weeks[wk][activeDay][exId][field]=value;save(nd)};
+    nd.routines[routine].weeks[wk][activeDay][exId][field]=value;
+    if(exDef){if(!nd.routines[routine].exerciseLib)nd.routines[routine].exerciseLib={};
+      nd.routines[routine].exerciseLib[exId]={name:exDef.name,target:exDef.target,unit:exDef.unit||"reps",hasWeight:!!exDef.hasWeight,note:exDef.note||"",day:activeDay}}
+    save(nd)};
+  const archiveExercise=(exId)=>{const nd=JSON.parse(JSON.stringify(latestData.current));
+    if(!nd.routines?.[routine]?.restored)return;
+    const dayKey=Object.keys(R.days).find(dk=>(nd.routines[routine].restored[dk]||[]).includes(exId));
+    if(dayKey){nd.routines[routine].restored[dayKey]=nd.routines[routine].restored[dayKey].filter(id=>id!==exId);save(nd)}};
+  const getActiveExercises=(dayKey)=>{
+    const hardcoded=R.days[dayKey].exercises;
+    const restored=rData?.restored?.[dayKey]||[];
+    const lib=rData?.exerciseLib||{};
+    const restoredExs=restored.filter(id=>lib[id]&&!hardcoded.some(ex=>ex.id===id)).map(id=>({id,...lib[id],isRestored:true}));
+    return[...hardcoded,...restoredExs]};
   const isDayComplete=(w,d)=>{const dd=rData?.weeks?.[`w${w}`]?.[d];if(!dd)return false;return R.days[d].exercises.every(ex=>dd[ex.id]?.done)};
   const getWC=w=>dayKeys.filter(d=>isDayComplete(w,d)).length;
-  const resetData=()=>{if(confirm("Erase ALL progress for this routine?")){const nd=JSON.parse(JSON.stringify(latestData.current));if(!nd.routines)nd.routines={};nd.routines[routine]={weeks:{}};save(nd);setCurrentWeek(1)}};
+  const resetData=()=>{if(confirm("Erase ALL progress for this routine? Exercise library will be preserved.")){const nd=JSON.parse(JSON.stringify(latestData.current));if(!nd.routines)nd.routines={};const lib=nd.routines[routine]?.exerciseLib||{};nd.routines[routine]={weeks:{},exerciseLib:lib,restored:{}};save(nd);setCurrentWeek(1)}};
   const disconnect=()=>{if(confirm("Disconnect this device?")){localStorage.removeItem(SYNC_CODE_KEY);localStorage.removeItem(LOCAL_DATA_KEY);setSyncCode(null)}};
 
-  const plan=R.days[activeDay];const cw=getWC(currentWeek);const isMSTF=routine==="mstf";
+  const plan=R.days[activeDay];const activeExercises=getActiveExercises(activeDay);const cw=getWC(currentWeek);const isMSTF=routine==="mstf";
   const pastWeeks=[];for(let w=currentWeek-1;w>=1;w--){if(rData?.weeks?.[`w${w}`])pastWeeks.push(w)}
 
   return(<div>
@@ -270,25 +285,35 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
         <strong>MSTF tempo:</strong> 10 sec up, 10 sec down. 1 set to failure. Target 90–120 sec TUL per exercise. Under 90s → go lighter. Over 120s → go heavier. Use bands, dumbbells, or bodyweight.</div>}
 
       <div style={{padding:"0 1rem"}}>
-        {plan.exercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);
-          return(<div key={ex.id} style={{background:"#fff",borderRadius:"12px",padding:".9rem 1rem",marginBottom:".65rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",borderLeft:`4px solid ${entry.done?"#4caf50":plan.color}`,opacity:entry.done?0.85:1}}>
+        {activeExercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);
+          return(<div key={ex.id} style={{background:"#fff",borderRadius:"12px",padding:".9rem 1rem",marginBottom:".65rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",borderLeft:`4px solid ${entry.done?"#4caf50":ex.isRestored?"#e67e22":plan.color}`,opacity:entry.done?0.85:1}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:".5rem"}}>
-              <div><div style={{fontWeight:700,fontSize:".95rem"}}>{ex.name}</div><div style={{fontSize:".78rem",color:"#888",marginTop:1}}>{ex.target}</div></div>
-              <button onClick={()=>updateEntry(ex.id,"done",!entry.done)} style={{border:`2px solid ${entry.done?"#4caf50":"#ccc"}`,background:entry.done?"#4caf50":"#fff",borderRadius:"8px",width:36,height:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem",color:entry.done?"#fff":"#ccc",flexShrink:0}}>✓</button></div>
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:".4rem"}}>
+                  <span style={{fontWeight:700,fontSize:".95rem"}}>{ex.name}</span>
+                  {ex.isRestored&&<span style={{fontSize:".6rem",background:"#fdf3ec",color:"#e67e22",padding:".1rem .4rem",borderRadius:"8px",fontWeight:600}}>RESTORED</span>}
+                </div>
+                <div style={{fontSize:".78rem",color:"#888",marginTop:1}}>{ex.target}</div>
+              </div>
+              <div style={{display:"flex",gap:".3rem",alignItems:"center"}}>
+                {ex.isRestored&&<button onClick={()=>archiveExercise(ex.id)} title="Archive" style={{border:"1px solid #ddd",background:"#fff",borderRadius:"6px",width:28,height:28,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:".7rem",color:"#999"}}>✕</button>}
+                <button onClick={()=>updateEntry(ex.id,"done",!entry.done,ex)} style={{border:`2px solid ${entry.done?"#4caf50":"#ccc"}`,background:entry.done?"#4caf50":"#fff",borderRadius:"8px",width:36,height:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem",color:entry.done?"#fff":"#ccc",flexShrink:0}}>✓</button>
+              </div>
+            </div>
             <div style={{display:"flex",gap:".4rem",flexWrap:"wrap"}}>
               {!isMSTF&&<div style={{flex:1,minWidth:"60px"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Sets</label>
-                <input type="number" inputMode="numeric" value={entry.sets||""} onChange={e=>updateEntry(ex.id,"sets",e.target.value)} placeholder="—" style={IS}/></div>}
+                <input type="number" inputMode="numeric" value={entry.sets||""} onChange={e=>updateEntry(ex.id,"sets",e.target.value,ex)} placeholder="—" style={IS}/></div>}
               <div style={{flex:1,minWidth:"60px"}}>
                 <label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>{isMSTF?"TUL (sec)":ex.unit==="sec"?"Seconds":ex.unit==="min"?"Minutes":ex.unit==="rounds"?"Rounds":"Reps"}</label>
-                <input type="number" inputMode="numeric" value={entry.reps||""} onChange={e=>updateEntry(ex.id,"reps",e.target.value)} placeholder={isMSTF?"90–120":"—"} style={{...IS,borderColor:isMSTF&&entry.reps?(Number(entry.reps)<90?"#e67e22":Number(entry.reps)<=120?"#4caf50":"#3498db"):"#e0dbd5"}}/>
+                <input type="number" inputMode="numeric" value={entry.reps||""} onChange={e=>updateEntry(ex.id,"reps",e.target.value,ex)} placeholder={isMSTF?"90–120":"—"} style={{...IS,borderColor:isMSTF&&entry.reps?(Number(entry.reps)<90?"#e67e22":Number(entry.reps)<=120?"#4caf50":"#3498db"):"#e0dbd5"}}/>
                 {isMSTF&&entry.reps&&<div style={{fontSize:".68rem",fontWeight:600,marginTop:".2rem",color:Number(entry.reps)<90?"#e67e22":Number(entry.reps)<=120?"#27ae60":"#2980b9"}}>
                   {Number(entry.reps)<90?"⬆ Too heavy — reduce resistance":Number(entry.reps)<=120?"✓ Sweet spot":"⬇ Too light — increase resistance"}</div>}
               </div>
               {ex.hasWeight&&<div style={{flex:1,minWidth:"60px"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Lbs</label>
-                <input type="number" inputMode="decimal" value={entry.weight||""} onChange={e=>updateEntry(ex.id,"weight",e.target.value)} placeholder="—" style={IS}/></div>}
+                <input type="number" inputMode="decimal" value={entry.weight||""} onChange={e=>updateEntry(ex.id,"weight",e.target.value,ex)} placeholder="—" style={IS}/></div>}
             </div>
             <div style={{marginTop:".4rem"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Notes</label>
-              <input type="text" value={entry.notes||""} onChange={e=>updateEntry(ex.id,"notes",e.target.value)} placeholder={isMSTF?"Reached failure? Band/DB/BW? Weight?":"How did it feel?"} style={{...IS,fontSize:".82rem"}}/></div>
+              <input type="text" value={entry.notes||""} onChange={e=>updateEntry(ex.id,"notes",e.target.value,ex)} placeholder={isMSTF?"Reached failure? Band/DB/BW? Weight?":"How did it feel?"} style={{...IS,fontSize:".82rem"}}/></div>
           </div>)})}
       </div>
     </>:
@@ -320,6 +345,168 @@ function WS({week,rData,label,R,routine}){
             {e.notes&&<span style={{color:"#aaa"}}> — {e.notes}</span>}</div>)})}</div>}
         {!dd&&<div style={{fontSize:".78rem",color:"#ccc",marginLeft:".5rem"}}>Not logged</div>}
       </div>)})}</div>);
+}
+
+// ═══ MINI CHART (SVG) ═══
+function MiniChart({points,targetMin,targetMax,color,label,unit}){
+  if(!points||points.length===0)return<div style={{color:"#ccc",fontSize:".82rem",padding:".5rem 0"}}>No data yet</div>;
+  const W=300,H=120,PX=35,PY=15,PB=25;
+  const vals=points.map(p=>p.value);const weeks=points.map(p=>p.week);
+  let minV=Math.min(...vals),maxV=Math.max(...vals);
+  if(targetMin!==undefined){minV=Math.min(minV,targetMin);maxV=Math.max(maxV,targetMax)}
+  if(minV===maxV){minV-=10;maxV+=10}
+  const range=maxV-minV||1;
+  const x=i=>PX+(i/(Math.max(points.length-1,1)))*(W-PX-10);
+  const y=v=>PY+(1-(v-minV)/range)*(H-PY-PB);
+  const pathD=points.map((p,i)=>`${i===0?"M":"L"}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ");
+
+  return(<svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",maxWidth:340,height:"auto",display:"block"}}>
+    {targetMin!==undefined&&<rect x={PX} y={y(targetMax)} width={W-PX-10} height={y(targetMin)-y(targetMax)} fill="#27ae60" opacity=".1" rx="3"/>}
+    {targetMin!==undefined&&<text x={W-12} y={y(targetMax)+12} fontSize="8" fill="#27ae60" textAnchor="end" opacity=".6">{targetMax}s</text>}
+    {targetMin!==undefined&&<text x={W-12} y={y(targetMin)-4} fontSize="8" fill="#27ae60" textAnchor="end" opacity=".6">{targetMin}s</text>}
+    {[0,0.25,0.5,0.75,1].map((f,i)=>{const v=Math.round(minV+f*range);
+      return<g key={i}><line x1={PX} y1={y(v)} x2={W-10} y2={y(v)} stroke="#eee" strokeWidth=".5"/>
+        <text x={PX-4} y={y(v)+3} fontSize="8" fill="#999" textAnchor="end">{v}</text></g>})}
+    <path d={pathD} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    {points.map((p,i)=><g key={i}>
+      <circle cx={x(i)} cy={y(p.value)} r="4" fill="#fff" stroke={color} strokeWidth="2"/>
+      <text x={x(i)} y={y(p.value)-8} fontSize="8" fill={color} textAnchor="middle" fontWeight="600">{p.value}</text>
+      <text x={x(i)} y={H-4} fontSize="7" fill="#999" textAnchor="middle">W{p.week}</text>
+    </g>)}
+  </svg>);
+}
+
+// ═══ PROGRESS VIEW ═══
+function ProgressView({syncCode,routine}){
+  const R=ROUTINES[routine];const dayKeys=Object.keys(R.days);const isMSTF=routine==="mstf";
+  const[data,setData]=useState(null);
+  const[activeDay,setActiveDay]=useState(dayKeys[0]);
+  const[loading,setLoading]=useState(true);
+
+  useEffect(()=>{setActiveDay(dayKeys[0])},[routine]);
+
+  useEffect(()=>{
+    if(!syncCode)return;
+    const unsub=db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
+      if(doc.exists)setData(doc.data());
+      setLoading(false);
+    },()=>setLoading(false));
+    return()=>unsub();
+  },[syncCode]);
+
+  const getExerciseHistory=(exId)=>{
+    const rData=data?.routines?.[routine];if(!rData?.weeks)return[];
+    const points=[];
+    const weekKeys=Object.keys(rData.weeks).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+    weekKeys.forEach(wk=>{
+      const weekNum=parseInt(wk.slice(1));
+      const dayData=rData.weeks[wk]?.[activeDay];
+      const entry=dayData?.[exId];
+      if(entry?.done&&entry?.reps){points.push({week:weekNum,value:Number(entry.reps),weight:entry.weight?Number(entry.weight):null})}
+    });
+    return points;
+  };
+
+  const getWeightHistory=(exId)=>{
+    const rData=data?.routines?.[routine];if(!rData?.weeks)return[];
+    const points=[];
+    const weekKeys=Object.keys(rData.weeks).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+    weekKeys.forEach(wk=>{
+      const weekNum=parseInt(wk.slice(1));
+      const entry=rData.weeks[wk]?.[activeDay]?.[exId];
+      if(entry?.done&&entry?.weight){points.push({week:weekNum,value:Number(entry.weight)})}
+    });
+    return points;
+  };
+
+  const plan=R.days[activeDay];
+  const rData=data?.routines?.[routine]||{};
+  const lib=rData?.exerciseLib||{};
+  const restored=rData?.restored?.[activeDay]||[];
+  const activeIds=[...plan.exercises.map(ex=>ex.id),...restored];
+  const hasAnyData=plan.exercises.some(ex=>getExerciseHistory(ex.id).length>0);
+
+  // Find archived exercises: in exerciseLib for this day, have data, but not active
+  const archivedExs=Object.entries(lib).filter(([id,meta])=>meta.day===activeDay&&!activeIds.includes(id)&&getExerciseHistory(id).length>0);
+
+  const restoreExercise=(exId)=>{
+    const nd=JSON.parse(JSON.stringify(data));
+    if(!nd.routines[routine].restored)nd.routines[routine].restored={};
+    if(!nd.routines[routine].restored[activeDay])nd.routines[routine].restored[activeDay]=[];
+    if(!nd.routines[routine].restored[activeDay].includes(exId)){
+      nd.routines[routine].restored[activeDay].push(exId);
+      db.collection("trackers").doc(syncCode).set(nd);setData(nd)}};
+
+  return(<div>
+    <div style={{background:R.color,color:"#fff",padding:"1.25rem 1rem",textAlign:"center"}}>
+      <div style={{fontSize:"1.35rem",fontWeight:700}}>Progress</div>
+      <div style={{fontSize:".82rem",opacity:.8,marginTop:".2rem"}}>{R.name} — trends over time</div></div>
+
+    <div style={{display:"flex",gap:".4rem",padding:".75rem 1rem"}}>
+      {dayKeys.map(key=>{const day=R.days[key];
+        return(<button key={key} onClick={()=>setActiveDay(key)} style={{
+          flex:1,padding:".5rem .25rem",border:activeDay===key?`2px solid ${day.color}`:"2px solid transparent",
+          borderRadius:"10px",cursor:"pointer",fontSize:".75rem",fontWeight:600,textAlign:"center",
+          background:activeDay===key?day.bg:"#fff",color:day.color,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}}>
+          <div>{day.label}</div><div style={{fontSize:".65rem",fontWeight:400,opacity:.75,marginTop:1}}>{day.title}</div>
+        </button>)})}
+    </div>
+
+    {loading?<div style={{textAlign:"center",padding:"3rem",color:"#999"}}>Loading...</div>:
+     !hasAnyData&&archivedExs.length===0?<div style={{textAlign:"center",padding:"3rem 1.5rem",color:"#999",fontSize:".9rem",lineHeight:1.6}}>
+       No completed workouts logged yet for {plan.label}. After you log a few weeks, charts will appear here showing your trends.</div>:
+    <div style={{padding:"0 1rem"}}>
+      {plan.exercises.map(ex=>{
+        const history=getExerciseHistory(ex.id);
+        const weightHistory=getWeightHistory(ex.id);
+        if(history.length===0)return null;
+        const trend=history.length>=2?history[history.length-1].value-history[history.length-2].value:0;
+        return(<div key={ex.id} style={{background:"#fff",borderRadius:"12px",padding:"1rem",marginBottom:".75rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".5rem"}}>
+            <div style={{fontWeight:700,fontSize:".95rem"}}>{ex.name}</div>
+            {trend!==0&&<span style={{fontSize:".75rem",fontWeight:600,color:trend>0?"#27ae60":"#e67e22"}}>
+              {trend>0?"▲":"▼"} {Math.abs(trend)}{isMSTF?"s":""}</span>}
+          </div>
+          <div style={{fontSize:".72rem",color:"#999",marginBottom:".3rem",fontWeight:600,textTransform:"uppercase"}}>
+            {isMSTF?"Time Under Load (sec)":ex.unit==="sec"?"Duration (sec)":"Reps"}</div>
+          <MiniChart points={history} color={R.color} targetMin={isMSTF?90:undefined} targetMax={isMSTF?120:undefined}/>
+          {weightHistory.length>0&&<>
+            <div style={{fontSize:".72rem",color:"#999",marginTop:".75rem",marginBottom:".3rem",fontWeight:600,textTransform:"uppercase"}}>Weight (lbs)</div>
+            <MiniChart points={weightHistory} color="#c4713b"/></>}
+        </div>)})}
+
+      {/* Archived Exercises */}
+      {archivedExs.length>0&&<>
+        <div style={{fontSize:".8rem",fontWeight:700,textTransform:"uppercase",letterSpacing:".06em",color:"#999",padding:".75rem 0 .5rem",marginTop:".5rem",borderTop:"2px dashed #e0dbd5"}}>
+          📦 Archived Exercises</div>
+        <div style={{fontSize:".78rem",color:"#999",marginBottom:".75rem",lineHeight:1.5}}>
+          These exercises were removed from the active routine but your data is preserved. Tap Restore to add them back to your workout.</div>
+        {archivedExs.map(([id,meta])=>{
+          const history=getExerciseHistory(id);
+          const weightHistory=getWeightHistory(id);
+          const trend=history.length>=2?history[history.length-1].value-history[history.length-2].value:0;
+          return(<div key={id} style={{background:"#fff",borderRadius:"12px",padding:"1rem",marginBottom:".75rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",border:"1px dashed #e0dbd5"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".5rem"}}>
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:".4rem"}}>
+                  <span style={{fontWeight:700,fontSize:".95rem"}}>{meta.name}</span>
+                  <span style={{fontSize:".6rem",background:"#f5f0eb",color:"#999",padding:".1rem .4rem",borderRadius:"8px",fontWeight:600}}>ARCHIVED</span>
+                </div>
+                {trend!==0&&<span style={{fontSize:".72rem",fontWeight:600,color:trend>0?"#27ae60":"#e67e22"}}>
+                  Last change: {trend>0?"▲":"▼"} {Math.abs(trend)}{isMSTF?"s":""}</span>}
+              </div>
+              <button onClick={()=>restoreExercise(id)} style={{border:"none",background:R.color,color:"#fff",padding:".4rem .8rem",borderRadius:"8px",fontSize:".75rem",fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>Restore</button>
+            </div>
+            <div style={{fontSize:".72rem",color:"#999",marginBottom:".3rem",fontWeight:600,textTransform:"uppercase"}}>
+              {isMSTF?"Time Under Load (sec)":meta.unit==="sec"?"Duration (sec)":"Reps"}</div>
+            <MiniChart points={history} color="#999" targetMin={isMSTF?90:undefined} targetMax={isMSTF?120:undefined}/>
+            {weightHistory.length>0&&<>
+              <div style={{fontSize:".72rem",color:"#999",marginTop:".75rem",marginBottom:".3rem",fontWeight:600,textTransform:"uppercase"}}>Weight (lbs)</div>
+              <MiniChart points={weightHistory} color="#c4a882"/></>}
+          </div>)})}
+      </>}
+    </div>}
+  </div>);
 }
 
 // ═══ EXERCISE PLAN VIEW ═══
