@@ -43,16 +43,16 @@ const IS={width:"100%",padding:".45rem .5rem",border:"1.5px solid #e0dbd5",borde
 const ROUTINES={
 "sc":{
   name:"Strength & Cardio",short:"S&C",icon:"🏋️",color:"#2d5a3d",
-  desc:"3 days/week • 30–45 min • Bodyweight + dumbbells",
+  desc:"3–4 days/week • 30–45 min • Bodyweight + dumbbells",
   days:{
     day1:{label:"Day 1",title:"Upper Body + Core",color:"#2d5a3d",bg:"#e8f0eb",
       warmup:[{name:"Arm Circles",sets:"30s each dir",note:"Extend arms, small→wide circles. Reverse after 30s."},{name:"Shoulder Pass-Throughs",sets:"10 reps",note:"Towel wide overhead and behind back. Arms straight."},{name:"Cat-Cow",sets:"8 reps",note:"Hands & knees. Inhale: belly drops. Exhale: round spine."}],
       exercises:[
         {id:"pushups",name:"Push-Ups",target:"2–3 × 10–15",unit:"reps",note:"Hands shoulder-width, body straight. Modification: hands on counter."},
-        {id:"rows",name:"DB Bent-Over Row",target:"2–3 × 12 ea.",unit:"reps",hasWeight:true,note:"Hinge 45° at hips. Pull dumbbell to hip. Start 10–15 lb."},
+        {id:"renrow",name:"DB Renegade Row",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Push-up position with hands on dumbbells. Row one DB to hip while bracing core to resist rotation. Challenges anti-rotation stability like the Gorilla Row. Keep hips square. Wider stance = easier. Start 10–15 lb."},
         {id:"pike",name:"Pike Push-Up / DB Press",target:"2–3 × 8–12",unit:"reps",note:"Downward-dog push-up. Easier: DB overhead press 8–12 lb."},
         {id:"plank",name:"Plank Hold",target:"2–3 × 30–60s",unit:"sec",note:"Forearms down, squeeze glutes, brace core. Start 30s."},
-        {id:"deadbug",name:"Dead Bug",target:"2–3 × 10 ea.",unit:"reps",note:"On back, lower opposite arm/leg slowly. Lower back stays on floor."},
+        {id:"woodchop",name:"DB Woodchop",target:"2–3 × 10 ea. side",unit:"reps",hasWeight:true,note:"Hold one dumbbell with both hands. Start low on one side, rotate and sweep diagonally overhead to other side. 2s up, 2s down. Pivot feet. Builds rotational power for real-world movement. Start 8–12 lb."},
         {id:"curl",name:"DB Bicep Curl",target:"2–3 × 12–15",unit:"reps",hasWeight:true,note:"Curl to shoulders, elbows pinned. 3s down. 8–15 lb."},
         {id:"carry",name:"Farmer's Carry",target:"2–3 × 40–60s",unit:"sec",hasWeight:true,note:"Hold a dumbbell in each hand at your sides. Walk slowly with tall posture, shoulders back and down. Squeeze the handles hard. Builds grip strength, core stability, and posture. Start 15–25 lb each hand."}],
       cooldown:[{name:"Doorway Chest Stretch",sets:"30s each side",note:"Forearm on frame, step through."},{name:"Cross-Body Shoulder Stretch",sets:"30s each arm",note:"Pull arm across chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist."},{name:"Child's Pose",sets:"60s",note:"Kneel, sit back, arms forward. Breathe."}]},
@@ -60,9 +60,9 @@ const ROUTINES={
       warmup:[{name:"Bodyweight Squats",sets:"10 slow reps",note:"Shoulder-width, sit back. Control."},{name:"Leg Swings",sets:"10 ea. leg, ea. dir",note:"Hold wall. Forward/back, side/side."},{name:"Ankle Circles",sets:"10 ea. dir, ea. foot",note:"Rotate ankle in circles."}],
       exercises:[
         {id:"goblet",name:"Goblet Squat",target:"2–3 × 12–15",unit:"reps",hasWeight:true,note:"DB at chest 10–25 lb. Chest up, weight in heels."},
-        {id:"lunge",name:"Reverse Lunge",target:"2–3 × 10 ea.",unit:"reps",note:"Step back, lower knee. Front knee over ankle."},
+        {id:"bss",name:"DB Bulgarian Split Squat",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Rear foot on a chair or bench behind you. Lower until front thigh is parallel to floor. Front knee tracks over toes. Hold DBs at sides. Builds single-leg strength, corrects imbalances, and challenges pelvic stability. Start bodyweight, add 8–15 lb DBs when stable."},
         {id:"bridge",name:"Glute Bridge",target:"2–3 × 15",unit:"reps",note:"Drive hips up, squeeze glutes 2s. Progress: single-leg."},
-        {id:"wallsit",name:"Wall Sit",target:"2–3 × 30–45s",unit:"sec",note:"Back on wall, thighs parallel. Hold."},
+        {id:"latlunge",name:"Lateral Lunge",target:"2–3 × 10 ea.",unit:"reps",hasWeight:true,note:"Step wide to one side, bend that knee and sit hips back while keeping other leg straight. Push back to standing. Trains the frontal (side-to-side) plane that most routines miss. Hold one DB at chest for load. Essential for real-world cutting and lateral movement."},
         {id:"calf",name:"Single-Leg Calf Raise",target:"2–3 × 12–15 ea.",unit:"reps",note:"Stand on one foot (hold wall for balance). Rise on toes, 1s hold, lower slowly over 3 sec. Do all reps on one leg, then switch. Builds calf strength AND balance simultaneously."},
         {id:"slrdl",name:"DB Single-Leg Romanian Deadlift",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Hold one dumbbell in opposite hand from standing leg. Hinge forward at hips, extending free leg behind you. Lower DB toward floor keeping back flat. Return to standing. Targets hamstrings, glutes, and balance. Start with 8–10 lb — balance is the real challenge. Touch a wall if needed at first."}],
       cooldown:[{name:"Standing Quad Stretch",sets:"30s each leg",note:"Grab ankle behind, pull to glute."},{name:"Figure-Four Hip Stretch",sets:"30s each side",note:"Cross ankle over knee, pull thigh to chest."},{name:"Downward Dog",sets:"45s",note:"Inverted V, pedal feet."},{name:"Seated Forward Fold",sets:"45s",note:"Hinge at hips toward toes."}]},
@@ -70,17 +70,27 @@ const ROUTINES={
       warmup:[{name:"March in Place",sets:"60s",note:"Knees to hip height, pump arms."},{name:"Arm Circles + Twists",sets:"30s each",note:"Quick circles, then torso rotation."}],
       exercises:[
         {id:"walk",name:"Brisk Walk / Jog",target:"45s/15s rest",unit:"rounds",note:"Moderate pace. Pump arms."},
-        {id:"stepup",name:"Step-Ups",target:"45s/15s rest",unit:"rounds",note:"6–12 inch step. Alternate lead leg."},
-        {id:"jacks",name:"Jumping Jacks",target:"45s/15s rest",unit:"rounds",note:"Low-impact: stepping jacks."},
+        {id:"stepup",name:"Explosive Step-Ups",target:"45s/15s rest",unit:"rounds",note:"Step up onto a sturdy 6–12 inch step and drive up powerfully, lifting trailing knee high. Step down with control. Alternate legs. Focus on explosive push-off. Builds the quick-force power that prevents falls."},
+        {id:"sqtjump",name:"Squat Jump",target:"45s/15s rest",unit:"rounds",note:"Squat down, then explode upward reaching hands overhead. Land softly with bent knees. This is your explosive strength station. Low-impact option: fast bodyweight squats with a calf raise at the top instead of jumping."},
         {id:"climbers",name:"Mountain Climbers",target:"45s/15s rest",unit:"rounds",note:"Push-up position, alternate knees. ~1/sec."},
-        {id:"highknees",name:"High Knees",target:"45s/15s rest",unit:"rounds",note:"March with high knees. Height > speed."},
+        {id:"powerpush",name:"Power Push-Up",target:"45s/15s rest",unit:"rounds",note:"Standard push-up but push off the floor explosively so hands briefly leave the ground. Land soft, lower with control. Builds upper-body explosive power. Low-impact option: fast-tempo regular push-ups with a strong lockout."},
         {id:"flow",name:"Flexibility Flow",target:"12–15 min",unit:"min",note:"Sun salutations → Warriors → Pigeon → Twist → Child's pose."}],
-      cooldown:[{name:"Pigeon Pose",sets:"45s each side",note:"Deep hip stretch."},{name:"Hamstring Stretch",sets:"30s each leg",note:"On back, lift leg, hold behind thigh."},{name:"Single-Leg Balance Hold",sets:"30s each leg",note:"Stand on one foot, eyes open. When that's easy, close your eyes. Builds the balance and proprioception that prevents falls as you age. Do this barefoot if possible."},{name:"Child's Pose",sets:"60s",note:"Final rest. Breathe deeply."}]}
+      cooldown:[{name:"Pigeon Pose",sets:"45s each side",note:"Deep hip stretch."},{name:"Hamstring Stretch",sets:"30s each leg",note:"On back, lift leg, hold behind thigh."},{name:"Single-Leg Balance Hold",sets:"30s each leg",note:"Stand on one foot, eyes open. When that's easy, close your eyes. Builds the balance and proprioception that prevents falls as you age. Do this barefoot if possible."},{name:"Child's Pose",sets:"60s",note:"Final rest. Breathe deeply."}]},
+    dayH:{label:"Day 4",title:"HIIT Conditioning (Optional)",color:"#c0392b",bg:"#fdecea",
+      warmup:[{name:"Light Jog in Place",sets:"60s",note:"Easy pace, get blood flowing."},{name:"Leg Swings + Arm Circles",sets:"60s",note:"Dynamic stretches — forward/back swings, shoulder circles."},{name:"5 Squats + 5 Push-Ups",sets:"1 round",note:"Wake up the muscles. No rush."}],
+      exercises:[
+        {id:"h_sprint",name:"Fast High-Knee March",target:"30s on / 45s rest × 2",unit:"rounds",note:"March in place driving knees to hip height as fast as you can while staying controlled. Pump arms opposite to legs. Keep one foot on the ground at all times. Push the pace but don't sacrifice form. Progression: once comfortable, transition to running high knees where both feet briefly leave the ground."},
+        {id:"h_sqtjump",name:"Fast Squat + Calf Raise",target:"30s on / 45s rest × 2",unit:"rounds",note:"Bodyweight squats at a brisk pace — drop down fast, stand up fast, and rise onto your toes at the top with a strong calf push. Continuous for 30 seconds. Builds power without impact. Progression: add a small hop at the top instead of the calf raise, landing softly with bent knees."},
+        {id:"h_burpee",name:"Step-Back Burpee",target:"30s on / 45s rest × 2",unit:"rounds",note:"Squat down, place hands on floor, step one foot back then the other to plank. Do a push-up (or skip it initially). Step feet forward one at a time. Stand up tall. Repeat at a steady pace. No jumping — every transition is a step. Progression: add a small hop as you stand, then eventually jump feet back/forward together."},
+        {id:"h_skater",name:"Lateral Step-Touch",target:"30s on / 45s rest × 2",unit:"rounds",note:"Take a wide step to the right, touch left toe behind right foot. Step wide left, touch right toe behind. Swing arms for momentum. Move quickly side to side. Builds lateral agility safely. Progression: once stable, turn these into skater jumps — leaping from foot to foot with a single-leg landing."},
+        {id:"h_climber",name:"Moderate Mountain Climber",target:"30s on / 45s rest × 2",unit:"rounds",note:"Plank position, bring one knee toward chest, return, switch. Start at a steady pace (~1 per second). Keep hips level. Hands on a counter or chair to reduce wrist strain if needed. Progression: increase speed to a full sprint pace as your core and shoulders get stronger."},
+        {id:"h_tuck",name:"Fast Step-Up",target:"30s on / 45s rest × 2",unit:"rounds",note:"Use a sturdy step or bottom stair. Step up and drive the trailing knee high, step down, alternate legs. Move at a brisk pace with powerful push-offs. Builds explosive leg power with minimal impact. Progression: add a hop at the top of each step-up, or switch to alternating jump lunges."}],
+      cooldown:[{name:"Walk in Place",sets:"2 min",note:"Gradually bring heart rate down. Shake out arms and legs."},{name:"Standing Quad Stretch",sets:"30s each leg",note:"Pull heel to glute. Hold wall for balance."},{name:"Standing Forward Fold",sets:"45s",note:"Hang loose, breathe into hamstrings."},{name:"Deep Breathing",sets:"1 min",note:"Hands on knees or standing tall. 4 seconds in, 6 seconds out. Recovery breathing."}]}
   }
 },
 "mstf":{
   name:"Deep Fitness (MSTF)",short:"MSTF",icon:"🧘",color:"#5b3a8c",
-  desc:"2 days/week • 30 min • Band, DB, or bodyweight",
+  desc:"2–3 days/week • 30 min • Band, DB, or bodyweight",
   days:{
     workoutA:{label:"Workout A",title:"Full Body — Upper Focus",color:"#5b3a8c",bg:"#f0ecf5",
       warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
@@ -89,7 +99,7 @@ const ROUTINES={
         {id:"m_row",name:"Slow Row",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: anchor at chest height, pull to ribs over 10 sec, return over 10 sec. DB: hinge 45° at hips, pull dumbbell to hip over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
         {id:"m_press",name:"Slow Overhead Press",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, press overhead over 10 sec, lower over 10 sec. DB: press dumbbells from shoulders overhead over 10 sec, lower over 10 sec. Don't lock out. Core braced. To failure."},
         {id:"m_squat",name:"Slow Squat",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to lower, pause at bottom, 10 sec to rise. Don't lock knees at top. Keep tension constant. Weight in heels. DB option: hold dumbbell at chest (goblet style) for added resistance. To failure."},
-        {id:"m_fly",name:"Slow Chest Fly",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: anchor behind at chest height, bring handles together over 10 sec, return over 10 sec. DB: lie on floor, arms slightly bent, lower dumbbells out to sides over 10 sec, bring together over 10 sec. To failure."},
+        {id:"m_woodchop",name:"Slow DB Woodchop",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Hold one DB with both hands. Rotate from low on one side to high on the other over 10 sec, return over 10 sec. Pivot feet. Full rotational control. Builds the twisting strength used in real-world movement — carrying groceries, reaching, turning. One side to failure, then switch. Start 8–12 lb."},
         {id:"m_curl",name:"Slow Bicep Curl",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, curl over 10 sec, lower over 10 sec. DB: curl dumbbells over 10 sec, lower over 10 sec. Elbows pinned to ribs. No swinging. To failure."},
         {id:"m_fhold",name:"Slow Farmer's Hold",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Stand tall holding dumbbells at your sides. Squeeze handles as hard as possible. Shoulders back and down, core braced. Hold with full attention until grip fails. Builds grip strength — one of the strongest predictors of longevity. Start 15–25 lb each hand."}],
       cooldown:[{name:"Standing Forward Fold",sets:"45s",note:"Bend at hips, let arms hang. Breathe into hamstrings."},{name:"Chest Opener",sets:"30s",note:"Clasp hands behind back, lift gently. Open chest."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice where your muscles are working. Breathe into each area."}]},
@@ -98,12 +108,22 @@ const ROUTINES={
       exercises:[
         {id:"m_pushup2",name:"Slow Push-Up",target:"Target: 90–120s TUL",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier. Ensures Workout B covers push movement for full-body balance."},
         {id:"m_bridge",name:"Slow Glute Bridge",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to raise hips, squeeze 2 sec at top, 10 sec to lower. Don't touch floor between reps. DB option: rest a dumbbell on hips for added resistance. To failure."},
-        {id:"m_lunge",name:"Slow Reverse Lunge",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"10 sec to step back and lower, 10 sec to return. One leg at a time, full set then switch. DB option: hold dumbbells at sides or one at chest. To failure."},
+        {id:"m_bss",name:"Slow Bulgarian Split Squat",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Rear foot on chair behind you. Lower over 10 sec until front thigh is parallel, rise over 10 sec. Don't lock knee at top. Keep tension constant. DB option: hold at sides or one at chest. Builds single-leg strength and corrects muscular imbalances. One leg to failure, then switch."},
         {id:"m_calf",name:"Slow Single-Leg Calf Raise",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"One foot on floor, other lifted. Rise over 10 sec, hold 2 sec, lower over 10 sec. Don't bounce. Wall for balance. DB in one hand for added load. Switch legs. Builds calf strength + balance. To failure."},
         {id:"m_slrdl",name:"Slow Single-Leg RDL",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Hold DB in opposite hand. Hinge forward over 10 sec, extending free leg behind. Return over 10 sec. Keep back flat, slight knee bend on standing leg. Targets hamstrings, glutes, and balance — three key longevity factors. One leg at a time to failure."},
         {id:"m_pullap",name:"Slow Reverse Fly",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: hold at chest width, pull apart over 10 sec, return over 10 sec. DB: hinge forward 45°, raise dumbbells out to sides over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
-        {id:"m_deadbug",name:"Slow Dead Bug",target:"Target: 90–120s TUL",unit:"tul",note:"On back. Extend opposite arm/leg over 10 sec, return over 10 sec. Lower back pinned to floor. To failure."}],
-      cooldown:[{name:"Figure-Four Stretch",sets:"45s each side",note:"On back, cross ankle over knee, pull thigh to chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist gently."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice each muscle group. Breathe gratitude into your body."}]}
+        {id:"m_latlunge",name:"Slow Lateral Lunge",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Step wide to one side over 10 sec, sitting hips back, other leg straight. Push back to standing over 10 sec. DB option: hold at chest. Trains the lateral plane most routines miss — critical for real-world agility and fall prevention. One side to failure, then switch."}],
+      cooldown:[{name:"Figure-Four Stretch",sets:"45s each side",note:"On back, cross ankle over knee, pull thigh to chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist gently."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice each muscle group. Breathe gratitude into your body."}]},
+    workoutH:{label:"HIIT Day",title:"Conditioning & Power",color:"#c0392b",bg:"#fdecea",
+      warmup:[{name:"Light Jog in Place",sets:"60s",note:"Easy pace, get blood flowing."},{name:"Leg Swings + Arm Circles",sets:"60s",note:"Dynamic stretches — forward/back swings, shoulder circles."},{name:"5 Squats + 5 Push-Ups",sets:"1 round",note:"Wake up the muscles. No rush."}],
+      exercises:[
+        {id:"mh_sprint",name:"Fast High-Knee March",target:"30s on / 45s rest × 2",unit:"rounds",note:"March in place driving knees to hip height as fast as you can while staying controlled. Pump arms opposite to legs. Keep one foot on the ground at all times. Progression: transition to running high knees where both feet briefly leave the ground."},
+        {id:"mh_sqtjump",name:"Fast Squat + Calf Raise",target:"30s on / 45s rest × 2",unit:"rounds",note:"Brisk bodyweight squats — drop down fast, stand up fast, rise onto toes with a strong calf push at top. Continuous for 30 seconds. Builds power without impact. Progression: add a small hop at the top, landing softly with bent knees."},
+        {id:"mh_burpee",name:"Step-Back Burpee",target:"30s on / 45s rest × 2",unit:"rounds",note:"Squat down, place hands on floor, step one foot back then the other to plank. Push-up (or skip initially). Step feet forward one at a time. Stand up tall. No jumping — every transition is a step. Progression: add a hop as you stand, then eventually jump feet back/forward together."},
+        {id:"mh_skater",name:"Lateral Step-Touch",target:"30s on / 45s rest × 2",unit:"rounds",note:"Wide step right, touch left toe behind right foot. Step wide left, touch right toe behind. Swing arms, move quickly side to side. Builds lateral agility safely. Progression: turn into skater jumps — leaping foot to foot with single-leg landing."},
+        {id:"mh_climber",name:"Moderate Mountain Climber",target:"30s on / 45s rest × 2",unit:"rounds",note:"Plank position, alternate knees to chest at a steady pace (~1 per second). Keep hips level. Hands on counter to reduce wrist strain if needed. Progression: increase to full sprint speed as core and shoulders strengthen."},
+        {id:"mh_tuck",name:"Fast Step-Up",target:"30s on / 45s rest × 2",unit:"rounds",note:"Sturdy step or bottom stair. Step up, drive trailing knee high, step down, alternate. Brisk pace with powerful push-offs. Builds explosive leg power with minimal impact. Progression: add a hop at the top, or switch to alternating jump lunges."}],
+      cooldown:[{name:"Walk in Place",sets:"2 min",note:"Bring heart rate down gradually."},{name:"Standing Quad Stretch",sets:"30s each leg",note:"Pull heel to glute."},{name:"Standing Forward Fold",sets:"45s",note:"Hang loose, breathe into hamstrings."},{name:"Deep Breathing",sets:"1 min",note:"4 seconds in, 6 seconds out. Recovery breathing."}]}
   }
 }};
 
@@ -281,8 +301,11 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
         <span style={{fontSize:".82rem",fontWeight:600,color:"#666",whiteSpace:"nowrap"}}>📅 Date:</span>
         <input type="date" value={getDayDate(currentWeek,activeDay)||new Date().toISOString().split("T")[0]} onChange={e=>setDayDate(e.target.value)} style={{flex:1,padding:".4rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".9rem",fontFamily:"inherit",background:"#fafaf8",outline:"none"}}/></div></div>
 
-      {isMSTF&&<div style={{margin:"0 1rem .75rem",padding:".6rem .85rem",background:"#f0ecf5",borderRadius:"8px",fontSize:".78rem",color:"#5b3a8c",lineHeight:1.5}}>
+      {isMSTF&&activeDay!=="workoutH"&&<div style={{margin:"0 1rem .75rem",padding:".6rem .85rem",background:"#f0ecf5",borderRadius:"8px",fontSize:".78rem",color:"#5b3a8c",lineHeight:1.5}}>
         <strong>MSTF tempo:</strong> 10 sec up, 10 sec down. 1 set to failure. Target 90–120 sec TUL per exercise. Under 90s → go lighter. Over 120s → go heavier. Use bands, dumbbells, or bodyweight.</div>}
+
+      {(activeDay==="dayH"||activeDay==="workoutH")&&<div style={{margin:"0 1rem .75rem",padding:".6rem .85rem",background:"#fdecea",borderRadius:"8px",fontSize:".78rem",color:"#c0392b",lineHeight:1.5}}>
+        <strong>Phasing guide:</strong> Don't add HIIT until you've built a 4–6 week base with your strength routine. Start with 2 rounds and 45s rest. When that feels manageable, progress to 3 rounds and 30s rest. Each exercise lists a "Progression" — only move to those when the base version feels genuinely easy. Listen to your joints, not your ego.</div>}
 
       <div style={{padding:"0 1rem"}}>
         {activeExercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);
@@ -517,7 +540,7 @@ function PlanView({routine}){
       <div style={{fontSize:"1.35rem",fontWeight:700}}>{R.short} Exercise Guide</div>
       <div style={{fontSize:".82rem",opacity:.8,marginTop:".2rem"}}>Tap a day for full instructions</div></div>
     <div style={{margin:"1rem",padding:".85rem 1rem",background:isMSTF?"#f0ecf5":"#fdf3ec",borderRadius:"10px",fontSize:".82rem",lineHeight:1.55}}>
-      {isMSTF?<><strong style={{color:"#5b3a8c"}}>MSTF Method:</strong> Every rep takes ~20 seconds (10 up, 10 down). Do 1 set per exercise to complete muscle failure. Rest 30–60 sec between exercises. 2 sessions per week. Alternate Workout A and B. Use resistance bands, dumbbells, or bodyweight — each exercise lists options. Focus on breathing and body awareness throughout.</>:
+      {isMSTF?<><strong style={{color:"#5b3a8c"}}>MSTF Method:</strong> Every rep takes ~20 seconds (10 up, 10 down). Do 1 set per exercise to complete muscle failure. Rest 30–60 sec between exercises. Alternate Workout A and B for strength. Add the HIIT day mid-week for explosive power and aerobic conditioning — this completes all 5 Strength Span pillars. Use resistance bands, dumbbells, or bodyweight.</>:
       <><strong style={{color:"#c4713b"}}>Progression:</strong> Weeks 1–3: 2 rounds. Weeks 4+: 3 rounds. When 15 reps feel easy, slow tempo to 3s down / 1s up before adding weight. Rest 30–45s between exercises, 60–90s between rounds.</>}</div>
     <div style={{padding:"0 1rem"}}>
       {Object.entries(R.days).map(([key,day])=>{const isOpen=openDay===key;
@@ -534,8 +557,8 @@ function PlanView({routine}){
       <div style={{background:"#fff",borderRadius:"12px",marginBottom:".75rem",padding:"1rem 1.25rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",border:"1px solid #e0dbd5"}}>
         <div style={{fontWeight:700,fontSize:"1rem",color:"#4a6fa5"}}>Rest Days</div>
         <div style={{fontSize:".85rem",color:"#777",marginTop:".4rem",lineHeight:1.55}}>
-          {isMSTF?"Rest 3–4 days between sessions. Your muscles grow during recovery, not during the workout. Light walking is fine on off days.":
-          "Take rest days between training days. 20–30 min walk or gentle stretching."}</div></div>
+          {isMSTF?"Sample week: Monday → Workout A, Wednesday → HIIT, Friday → Workout B. Rest days between every session. Light walking is fine on off days.":
+          "Sample week: Mon → Day 1, Wed → Day 3, Fri → Day 5, Sat → HIIT (optional). Take rest days between training days. 20–30 min walk or gentle stretching."}</div></div>
       <div style={{background:"#fff",borderRadius:"12px",marginBottom:".75rem",padding:"1rem 1.25rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",border:"1px solid #e0dbd5"}}>
         <div style={{fontWeight:700,fontSize:"1rem",color:"#c4713b"}}>Nutrition for Strength Span</div>
         <div style={{fontSize:".85rem",color:"#777",marginTop:".4rem",lineHeight:1.55}}>
