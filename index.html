@@ -33,7 +33,7 @@ input[type="number"],input[type="text"],input[type="date"]{-webkit-appearance:no
 <script type="text/babel">
 const{useState,useEffect,useCallback,useRef}=React;
 const FIREBASE_CONFIG={apiKey:"AIzaSyALt3bUT-v5ALd17XoZXTZbdOKE4Q-O7-I",authDomain:"workout-journal-2adcb.firebaseapp.com",projectId:"workout-journal-2adcb",storageBucket:"workout-journal-2adcb.firebasestorage.app",messagingSenderId:"682553388016",appId:"1:682553388016:web:91116f411f4145da0f8b35"};
-const app=firebase.initializeApp(FIREBASE_CONFIG);const db=firebase.firestore(app);db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+const app=firebase.initializeApp(FIREBASE_CONFIG);const db=firebase.firestore(app);try{db.enablePersistence({synchronizeTabs:true}).catch(function(){})}catch(e){}
 const WORDS=["IRON","STEEL","PLANK","SQUAT","LUNGE","PRESS","RIDGE","BLAZE","STORM","FORGE","STONE","SWIFT","BRAVO","CEDAR","CLIFF","DELTA","EAGLE","FLINT","GROVE","HAWK","MAPLE","NORTH","OCEAN","PIKE","QUEST","RIVER","SAGE","TRAIL","VIGOR","WOLF","BOLT","CREST","DAWN","EMBER","FROST","GRIT","HIKE","JADE","KEEN","LYNX"];
 function generateSyncCode(){return`${WORDS[Math.floor(Math.random()*WORDS.length)]}-${WORDS[Math.floor(Math.random()*WORDS.length)]}-${Math.floor(1000+Math.random()*9000)}`}
 const SYNC_CODE_KEY="workout-sync-code",LOCAL_DATA_KEY="workout-progress-v4";
@@ -49,10 +49,10 @@ const ROUTINES={
       warmup:[{name:"Arm Circles",sets:"30s each dir",note:"Extend arms, small→wide circles. Reverse after 30s."},{name:"Shoulder Pass-Throughs",sets:"10 reps",note:"Towel wide overhead and behind back. Arms straight."},{name:"Cat-Cow",sets:"8 reps",note:"Hands & knees. Inhale: belly drops. Exhale: round spine."}],
       exercises:[
         {id:"pushups",name:"Push-Ups",target:"2–3 × 10–15",unit:"reps",note:"Hands shoulder-width, body straight. Modification: hands on counter."},
-        {id:"renrow",name:"DB Renegade Row",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Push-up position with hands on dumbbells. Row one DB to hip while bracing core to resist rotation. Challenges anti-rotation stability like the Gorilla Row. Keep hips square. Wider stance = easier. Start 10–15 lb."},
+        {id:"renrow",perSide:true,name:"DB Renegade Row",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Push-up position with hands on dumbbells. Row one DB to hip while bracing core to resist rotation. Challenges anti-rotation stability like the Gorilla Row. Keep hips square. Wider stance = easier. Start 10–15 lb."},
         {id:"pike",name:"Pike Push-Up / DB Press",target:"2–3 × 8–12",unit:"reps",note:"Downward-dog push-up. Easier: DB overhead press 8–12 lb."},
         {id:"plank",name:"Plank Hold",target:"2–3 × 30–60s",unit:"sec",note:"Forearms down, squeeze glutes, brace core. Start 30s."},
-        {id:"woodchop",name:"DB Woodchop",target:"2–3 × 10 ea. side",unit:"reps",hasWeight:true,note:"Hold one dumbbell with both hands. Start low on one side, rotate and sweep diagonally overhead to other side. 2s up, 2s down. Pivot feet. Builds rotational power for real-world movement. Start 8–12 lb."},
+        {id:"woodchop",perSide:true,name:"DB Woodchop",target:"2–3 × 10 ea. side",unit:"reps",hasWeight:true,note:"Hold one dumbbell with both hands. Start low on one side, rotate and sweep diagonally overhead to other side. 2s up, 2s down. Pivot feet. Builds rotational power for real-world movement. Start 8–12 lb."},
         {id:"curl",name:"DB Bicep Curl",target:"2–3 × 12–15",unit:"reps",hasWeight:true,note:"Curl to shoulders, elbows pinned. 3s down. 8–15 lb."},
         {id:"carry",name:"Farmer's Carry",target:"2–3 × 40–60s",unit:"sec",hasWeight:true,note:"Hold a dumbbell in each hand at your sides. Walk slowly with tall posture, shoulders back and down. Squeeze the handles hard. Builds grip strength, core stability, and posture. Start 15–25 lb each hand."}],
       cooldown:[{name:"Doorway Chest Stretch",sets:"30s each side",note:"Forearm on frame, step through."},{name:"Cross-Body Shoulder Stretch",sets:"30s each arm",note:"Pull arm across chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist."},{name:"Child's Pose",sets:"60s",note:"Kneel, sit back, arms forward. Breathe."}]},
@@ -60,11 +60,11 @@ const ROUTINES={
       warmup:[{name:"Bodyweight Squats",sets:"10 slow reps",note:"Shoulder-width, sit back. Control."},{name:"Leg Swings",sets:"10 ea. leg, ea. dir",note:"Hold wall. Forward/back, side/side."},{name:"Ankle Circles",sets:"10 ea. dir, ea. foot",note:"Rotate ankle in circles."}],
       exercises:[
         {id:"goblet",name:"Goblet Squat",target:"2–3 × 12–15",unit:"reps",hasWeight:true,note:"DB at chest 10–25 lb. Chest up, weight in heels."},
-        {id:"bss",name:"DB Bulgarian Split Squat",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Rear foot on a chair or bench behind you. Lower until front thigh is parallel to floor. Front knee tracks over toes. Hold DBs at sides. Builds single-leg strength, corrects imbalances, and challenges pelvic stability. Start bodyweight, add 8–15 lb DBs when stable."},
+        {id:"bss",perSide:true,name:"DB Bulgarian Split Squat",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Rear foot on a chair or bench behind you. Lower until front thigh is parallel to floor. Front knee tracks over toes. Hold DBs at sides. Builds single-leg strength, corrects imbalances, and challenges pelvic stability. Start bodyweight, add 8–15 lb DBs when stable."},
         {id:"bridge",name:"Glute Bridge",target:"2–3 × 15",unit:"reps",note:"Drive hips up, squeeze glutes 2s. Progress: single-leg."},
-        {id:"latlunge",name:"Lateral Lunge",target:"2–3 × 10 ea.",unit:"reps",hasWeight:true,note:"Step wide to one side, bend that knee and sit hips back while keeping other leg straight. Push back to standing. Trains the frontal (side-to-side) plane that most routines miss. Hold one DB at chest for load. Essential for real-world cutting and lateral movement."},
-        {id:"calf",name:"Single-Leg Calf Raise",target:"2–3 × 12–15 ea.",unit:"reps",note:"Stand on one foot (hold wall for balance). Rise on toes, 1s hold, lower slowly over 3 sec. Do all reps on one leg, then switch. Builds calf strength AND balance simultaneously."},
-        {id:"slrdl",name:"DB Single-Leg Romanian Deadlift",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Hold one dumbbell in opposite hand from standing leg. Hinge forward at hips, extending free leg behind you. Lower DB toward floor keeping back flat. Return to standing. Targets hamstrings, glutes, and balance. Start with 8–10 lb — balance is the real challenge. Touch a wall if needed at first."}],
+        {id:"latlunge",perSide:true,name:"Lateral Lunge",target:"2–3 × 10 ea.",unit:"reps",hasWeight:true,note:"Step wide to one side, bend that knee and sit hips back while keeping other leg straight. Push back to standing. Trains the frontal (side-to-side) plane that most routines miss. Hold one DB at chest for load. Essential for real-world cutting and lateral movement."},
+        {id:"calf",perSide:true,name:"Single-Leg Calf Raise",target:"2–3 × 12–15 ea.",unit:"reps",note:"Stand on one foot (hold wall for balance). Rise on toes, 1s hold, lower slowly over 3 sec. Do all reps on one leg, then switch. Builds calf strength AND balance simultaneously."},
+        {id:"slrdl",perSide:true,name:"DB Single-Leg Romanian Deadlift",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Hold one dumbbell in opposite hand from standing leg. Hinge forward at hips, extending free leg behind you. Lower DB toward floor keeping back flat. Return to standing. Targets hamstrings, glutes, and balance. Start with 8–10 lb — balance is the real challenge. Touch a wall if needed at first."}],
       cooldown:[{name:"Standing Quad Stretch",sets:"30s each leg",note:"Grab ankle behind, pull to glute."},{name:"Figure-Four Hip Stretch",sets:"30s each side",note:"Cross ankle over knee, pull thigh to chest."},{name:"Downward Dog",sets:"45s",note:"Inverted V, pedal feet."},{name:"Seated Forward Fold",sets:"45s",note:"Hinge at hips toward toes."}]},
     day5:{label:"Day 5",title:"Cardio + Flow",color:"#c4713b",bg:"#fdf3ec",
       warmup:[{name:"March in Place",sets:"60s",note:"Knees to hip height, pump arms."},{name:"Arm Circles + Twists",sets:"30s each",note:"Quick circles, then torso rotation."}],
@@ -95,24 +95,24 @@ const ROUTINES={
     workoutA:{label:"Workout A",title:"Full Body — Upper Focus",color:"#5b3a8c",bg:"#f0ecf5",
       warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
       exercises:[
-        {id:"m_pushup",name:"Slow Push-Up",target:"Target: 90–120s TUL",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier."},
+        {id:"m_pushup",chartId:"slow_pushup",name:"Slow Push-Up",target:"Target: 90–120s TUL",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier."},
         {id:"m_row",name:"Slow Row",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: anchor at chest height, pull to ribs over 10 sec, return over 10 sec. DB: hinge 45° at hips, pull dumbbell to hip over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
         {id:"m_press",name:"Slow Overhead Press",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, press overhead over 10 sec, lower over 10 sec. DB: press dumbbells from shoulders overhead over 10 sec, lower over 10 sec. Don't lock out. Core braced. To failure."},
         {id:"m_squat",name:"Slow Squat",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to lower, pause at bottom, 10 sec to rise. Don't lock knees at top. Keep tension constant. Weight in heels. DB option: hold dumbbell at chest (goblet style) for added resistance. To failure."},
-        {id:"m_woodchop",name:"Slow DB Woodchop",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Hold one DB with both hands. Rotate from low on one side to high on the other over 10 sec, return over 10 sec. Pivot feet. Full rotational control. Builds the twisting strength used in real-world movement — carrying groceries, reaching, turning. One side to failure, then switch. Start 8–12 lb."},
+        {id:"m_woodchop",perSide:true,name:"Slow DB Woodchop",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Hold one DB with both hands. Rotate from low on one side to high on the other over 10 sec, return over 10 sec. Pivot feet. Full rotational control. Builds the twisting strength used in real-world movement — carrying groceries, reaching, turning. One side to failure, then switch. Start 8–12 lb."},
         {id:"m_curl",name:"Slow Bicep Curl",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, curl over 10 sec, lower over 10 sec. DB: curl dumbbells over 10 sec, lower over 10 sec. Elbows pinned to ribs. No swinging. To failure."},
         {id:"m_fhold",name:"Slow Farmer's Hold",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Stand tall holding dumbbells at your sides. Squeeze handles as hard as possible. Shoulders back and down, core braced. Hold with full attention until grip fails. Builds grip strength — one of the strongest predictors of longevity. Start 15–25 lb each hand."}],
       cooldown:[{name:"Standing Forward Fold",sets:"45s",note:"Bend at hips, let arms hang. Breathe into hamstrings."},{name:"Chest Opener",sets:"30s",note:"Clasp hands behind back, lift gently. Open chest."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice where your muscles are working. Breathe into each area."}]},
     workoutB:{label:"Workout B",title:"Full Body — Lower Focus",color:"#5b3a8c",bg:"#f0ecf5",
       warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
       exercises:[
-        {id:"m_pushup2",name:"Slow Push-Up",target:"Target: 90–120s TUL",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier. Ensures Workout B covers push movement for full-body balance."},
+        {id:"m_pushup2",chartId:"slow_pushup",name:"Slow Push-Up",target:"Target: 90–120s TUL",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier. Ensures Workout B covers push movement for full-body balance."},
         {id:"m_bridge",name:"Slow Glute Bridge",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to raise hips, squeeze 2 sec at top, 10 sec to lower. Don't touch floor between reps. DB option: rest a dumbbell on hips for added resistance. To failure."},
-        {id:"m_bss",name:"Slow Bulgarian Split Squat",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Rear foot on chair behind you. Lower over 10 sec until front thigh is parallel, rise over 10 sec. Don't lock knee at top. Keep tension constant. DB option: hold at sides or one at chest. Builds single-leg strength and corrects muscular imbalances. One leg to failure, then switch."},
-        {id:"m_calf",name:"Slow Single-Leg Calf Raise",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"One foot on floor, other lifted. Rise over 10 sec, hold 2 sec, lower over 10 sec. Don't bounce. Wall for balance. DB in one hand for added load. Switch legs. Builds calf strength + balance. To failure."},
-        {id:"m_slrdl",name:"Slow Single-Leg RDL",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Hold DB in opposite hand. Hinge forward over 10 sec, extending free leg behind. Return over 10 sec. Keep back flat, slight knee bend on standing leg. Targets hamstrings, glutes, and balance — three key longevity factors. One leg at a time to failure."},
+        {id:"m_bss",perSide:true,name:"Slow Bulgarian Split Squat",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Rear foot on chair behind you. Lower over 10 sec until front thigh is parallel, rise over 10 sec. Don't lock knee at top. Keep tension constant. DB option: hold at sides or one at chest. Builds single-leg strength and corrects muscular imbalances. One leg to failure, then switch."},
+        {id:"m_calf",perSide:true,name:"Slow Single-Leg Calf Raise",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"One foot on floor, other lifted. Rise over 10 sec, hold 2 sec, lower over 10 sec. Don't bounce. Wall for balance. DB in one hand for added load. Switch legs. Builds calf strength + balance. To failure."},
+        {id:"m_slrdl",perSide:true,name:"Slow Single-Leg RDL",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Hold DB in opposite hand. Hinge forward over 10 sec, extending free leg behind. Return over 10 sec. Keep back flat, slight knee bend on standing leg. Targets hamstrings, glutes, and balance — three key longevity factors. One leg at a time to failure."},
         {id:"m_pullap",name:"Slow Reverse Fly",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: hold at chest width, pull apart over 10 sec, return over 10 sec. DB: hinge forward 45°, raise dumbbells out to sides over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
-        {id:"m_latlunge",name:"Slow Lateral Lunge",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Step wide to one side over 10 sec, sitting hips back, other leg straight. Push back to standing over 10 sec. DB option: hold at chest. Trains the lateral plane most routines miss — critical for real-world agility and fall prevention. One side to failure, then switch."}],
+        {id:"m_latlunge",perSide:true,name:"Slow Lateral Lunge",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Step wide to one side over 10 sec, sitting hips back, other leg straight. Push back to standing over 10 sec. DB option: hold at chest. Trains the lateral plane most routines miss — critical for real-world agility and fall prevention. One side to failure, then switch."}],
       cooldown:[{name:"Figure-Four Stretch",sets:"45s each side",note:"On back, cross ankle over knee, pull thigh to chest."},{name:"Seated Spinal Twist",sets:"30s each side",note:"Cross foot over knee, twist gently."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice each muscle group. Breathe gratitude into your body."}]},
     workoutH:{label:"HIIT Day",title:"Conditioning & Power",color:"#c0392b",bg:"#fdecea",
       warmup:[{name:"Light Jog in Place",sets:"60s",note:"Easy pace, get blood flowing."},{name:"Leg Swings + Arm Circles",sets:"60s",note:"Dynamic stretches — forward/back swings, shoulder circles."},{name:"5 Squats + 5 Push-Ups",sets:"1 round",note:"Wake up the muscles. No rush."}],
@@ -240,6 +240,18 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
     nd.routines[routine].weeks[wk][activeDay]._date=v;save(nd)};
   const getEntry=(w,d,exId)=>rData?.weeks?.[`w${w}`]?.[d]?.[exId]||{};
+  const getLastEntry=(exId)=>{
+    // Look backward through weeks for the most recent completed entry
+    for(let w=currentWeek;w>=1;w--){
+      // Check all days where this exercise might appear
+      for(const dk of dayKeys){
+        if(w===currentWeek&&dk===activeDay)continue; // skip current session
+        const entry=rData?.weeks?.[`w${w}`]?.[dk]?.[exId];
+        if(entry?.done)return entry;
+      }
+    }
+    return null;
+  };
   const updateEntry=(exId,field,value,exDef)=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
     if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
     if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
@@ -308,7 +320,10 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
         <strong>Phasing guide:</strong> Don't add HIIT until you've built a 4–6 week base with your strength routine. Start with 2 rounds and 45s rest. When that feels manageable, progress to 3 rounds and 30s rest. Each exercise lists a "Progression" — only move to those when the base version feels genuinely easy. Listen to your joints, not your ego.</div>}
 
       <div style={{padding:"0 1rem"}}>
-        {activeExercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);
+        {activeExercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);const last=getLastEntry(ex.id);const ps=ex.perSide;
+          const lastStr=last?(ps?
+            (last.reps_l||last.reps_r?`L: ${last.reps_l||"—"}${isMSTF?"s":""}${last.weight_l?` @ ${last.weight_l}lb`:""} | R: ${last.reps_r||"—"}${isMSTF?"s":""}${last.weight_r?` @ ${last.weight_r}lb`:""}`:""):
+            (`${last.reps||"—"}${isMSTF?"s":""}${last.weight?` @ ${last.weight}lb`:""}`)):null;
           return(<div key={ex.id} style={{background:"#fff",borderRadius:"12px",padding:".9rem 1rem",marginBottom:".65rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",borderLeft:`4px solid ${entry.done?"#4caf50":ex.isRestored?"#e67e22":plan.color}`,opacity:entry.done?0.85:1}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:".5rem"}}>
               <div>
@@ -317,13 +332,29 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
                   {ex.isRestored&&<span style={{fontSize:".6rem",background:"#fdf3ec",color:"#e67e22",padding:".1rem .4rem",borderRadius:"8px",fontWeight:600}}>RESTORED</span>}
                 </div>
                 <div style={{fontSize:".78rem",color:"#888",marginTop:1}}>{ex.target}</div>
+                {lastStr&&<div style={{fontSize:".72rem",color:"#2d5a3d",marginTop:2,fontStyle:"italic"}}>Last: {lastStr}</div>}
               </div>
               <div style={{display:"flex",gap:".3rem",alignItems:"center"}}>
                 {ex.isRestored&&<button onClick={()=>archiveExercise(ex.id)} title="Archive" style={{border:"1px solid #ddd",background:"#fff",borderRadius:"6px",width:28,height:28,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:".7rem",color:"#999"}}>✕</button>}
                 <button onClick={()=>updateEntry(ex.id,"done",!entry.done,ex)} style={{border:`2px solid ${entry.done?"#4caf50":"#ccc"}`,background:entry.done?"#4caf50":"#fff",borderRadius:"8px",width:36,height:36,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.1rem",color:entry.done?"#fff":"#ccc",flexShrink:0}}>✓</button>
               </div>
             </div>
-            <div style={{display:"flex",gap:".4rem",flexWrap:"wrap"}}>
+            {ps?[["l","Left"],["r","Right"]].map(([s,label])=>{
+              const rv=entry[`reps_${s}`]||"";const wv=entry[`weight_${s}`]||"";
+              return(<div key={s} style={{display:"flex",gap:".4rem",flexWrap:"wrap",alignItems:"flex-end",marginBottom:".35rem",paddingLeft:".4rem",borderLeft:`3px solid ${s==="l"?"#3498db":"#e67e22"}`}}>
+                <div style={{width:"28px",fontSize:".7rem",fontWeight:700,color:s==="l"?"#3498db":"#e67e22",paddingBottom:".5rem"}}>{label}</div>
+                {!isMSTF&&<div style={{flex:1,minWidth:"50px"}}><label style={{fontSize:".65rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Sets</label>
+                  <input type="number" inputMode="numeric" value={entry[`sets_${s}`]||""} onChange={e=>updateEntry(ex.id,`sets_${s}`,e.target.value,ex)} placeholder="—" style={IS}/></div>}
+                <div style={{flex:1,minWidth:"50px"}}>
+                  <label style={{fontSize:".65rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>{isMSTF?"TUL":ex.unit==="sec"?"Sec":"Reps"}</label>
+                  <input type="number" inputMode="numeric" value={rv} onChange={e=>updateEntry(ex.id,`reps_${s}`,e.target.value,ex)} placeholder={isMSTF?"90–120":"—"} style={{...IS,borderColor:isMSTF&&rv?(Number(rv)<90?"#e67e22":Number(rv)<=120?"#4caf50":"#3498db"):"#e0dbd5"}}/>
+                  {isMSTF&&rv&&<div style={{fontSize:".62rem",fontWeight:600,marginTop:".1rem",color:Number(rv)<90?"#e67e22":Number(rv)<=120?"#27ae60":"#2980b9"}}>
+                    {Number(rv)<90?"⬆ Lighter":Number(rv)<=120?"✓ Sweet spot":"⬇ Heavier"}</div>}
+                </div>
+                {ex.hasWeight&&<div style={{flex:1,minWidth:"50px"}}><label style={{fontSize:".65rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Lbs</label>
+                  <input type="number" inputMode="decimal" value={wv} onChange={e=>updateEntry(ex.id,`weight_${s}`,e.target.value,ex)} placeholder="—" style={IS}/></div>}
+              </div>)})
+            :<div style={{display:"flex",gap:".4rem",flexWrap:"wrap"}}>
               {!isMSTF&&<div style={{flex:1,minWidth:"60px"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Sets</label>
                 <input type="number" inputMode="numeric" value={entry.sets||""} onChange={e=>updateEntry(ex.id,"sets",e.target.value,ex)} placeholder="—" style={IS}/></div>}
               <div style={{flex:1,minWidth:"60px"}}>
@@ -334,7 +365,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
               </div>
               {ex.hasWeight&&<div style={{flex:1,minWidth:"60px"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Lbs</label>
                 <input type="number" inputMode="decimal" value={entry.weight||""} onChange={e=>updateEntry(ex.id,"weight",e.target.value,ex)} placeholder="—" style={IS}/></div>}
-            </div>
+            </div>}
             <div style={{marginTop:".4rem"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Notes</label>
               <input type="text" value={entry.notes||""} onChange={e=>updateEntry(ex.id,"notes",e.target.value,ex)} placeholder={isMSTF?"Reached failure? Band/DB/BW? Weight?":"How did it feel?"} style={{...IS,fontSize:".82rem"}}/></div>
           </div>)})}
@@ -417,28 +448,46 @@ function ProgressView({syncCode,routine}){
     return()=>unsub();
   },[syncCode]);
 
-  const getExerciseHistory=(exId)=>{
-    const rData=data?.routines?.[routine];if(!rData?.weeks)return[];
-    const points=[];
-    const weekKeys=Object.keys(rData.weeks).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
-    weekKeys.forEach(wk=>{
-      const weekNum=parseInt(wk.slice(1));
-      const dayData=rData.weeks[wk]?.[activeDay];
-      const entry=dayData?.[exId];
-      if(entry?.done&&entry?.reps){points.push({week:weekNum,value:Number(entry.reps),weight:entry.weight?Number(entry.weight):null})}
-    });
+  const getAllExercises=()=>Object.values(R.days).flatMap(d=>d.exercises);
+  const getLinkedIds=(exId)=>{
+    const allExs=getAllExercises();const ex=allExs.find(e=>e.id===exId);
+    if(ex?.chartId)return allExs.filter(e=>e.chartId===ex.chartId).map(e=>e.id);
+    return[exId];
+  };
+
+  const getExerciseHistory=(exId,side)=>{
+    const rd=data?.routines?.[routine];if(!rd?.weeks)return[];
+    const ids=getLinkedIds(exId);const points=[];
+    const weekKeys=Object.keys(rd.weeks).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+    weekKeys.forEach(wk=>{const weekNum=parseInt(wk.slice(1));
+      for(const dk of Object.keys(R.days)){
+        for(const id of ids){
+          const entry=rd.weeks[wk]?.[dk]?.[id];
+          if(entry?.done){
+            if(side){const v=entry[`reps_${side}`];if(v)points.push({week:weekNum,value:Number(v),day:dk})}
+            else if(entry.reps_l||entry.reps_r){
+              const l=Number(entry.reps_l||0),r=Number(entry.reps_r||0),cnt=(entry.reps_l?1:0)+(entry.reps_r?1:0);
+              if(cnt)points.push({week:weekNum,value:Math.round((l+r)/cnt),day:dk})}
+            else if(entry.reps){points.push({week:weekNum,value:Number(entry.reps),day:dk})}
+    }}}});
     return points;
   };
 
-  const getWeightHistory=(exId)=>{
-    const rData=data?.routines?.[routine];if(!rData?.weeks)return[];
-    const points=[];
-    const weekKeys=Object.keys(rData.weeks).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
-    weekKeys.forEach(wk=>{
-      const weekNum=parseInt(wk.slice(1));
-      const entry=rData.weeks[wk]?.[activeDay]?.[exId];
-      if(entry?.done&&entry?.weight){points.push({week:weekNum,value:Number(entry.weight)})}
-    });
+  const getWeightHistory=(exId,side)=>{
+    const rd=data?.routines?.[routine];if(!rd?.weeks)return[];
+    const ids=getLinkedIds(exId);const points=[];
+    const weekKeys=Object.keys(rd.weeks).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+    weekKeys.forEach(wk=>{const weekNum=parseInt(wk.slice(1));
+      for(const dk of Object.keys(R.days)){
+        for(const id of ids){
+          const entry=rd.weeks[wk]?.[dk]?.[id];
+          if(entry?.done){
+            if(side){const v=entry[`weight_${side}`];if(v)points.push({week:weekNum,value:Number(v),day:dk})}
+            else if(entry.weight_l||entry.weight_r){
+              const l=Number(entry.weight_l||0),r=Number(entry.weight_r||0),cnt=(entry.weight_l?1:0)+(entry.weight_r?1:0);
+              if(cnt)points.push({week:weekNum,value:Math.round((l+r)/cnt),day:dk})}
+            else if(entry.weight){points.push({week:weekNum,value:Number(entry.weight),day:dk})}
+    }}}});
     return points;
   };
 
@@ -484,17 +533,37 @@ function ProgressView({syncCode,routine}){
         const weightHistory=getWeightHistory(ex.id);
         if(history.length===0)return null;
         const trend=history.length>=2?history[history.length-1].value-history[history.length-2].value:0;
+        const linked=getLinkedIds(ex.id).length>1;
+        const ps=ex.perSide;
+        const lh=ps?getExerciseHistory(ex.id,"l"):[];
+        const rh=ps?getExerciseHistory(ex.id,"r"):[];
+        const hasLR=lh.length>0||rh.length>0;
         return(<div key={ex.id} style={{background:"#fff",borderRadius:"12px",padding:"1rem",marginBottom:".75rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".5rem"}}>
-            <div style={{fontWeight:700,fontSize:".95rem"}}>{ex.name}</div>
+            <div>
+              <div style={{fontWeight:700,fontSize:".95rem"}}>{ex.name}</div>
+              {linked&&<div style={{fontSize:".65rem",color:"#999",fontStyle:"italic"}}>Includes data from all workouts</div>}
+            </div>
             {trend!==0&&<span style={{fontSize:".75rem",fontWeight:600,color:trend>0?"#27ae60":"#e67e22"}}>
               {trend>0?"▲":"▼"} {Math.abs(trend)}{isMSTF?"s":""}</span>}
           </div>
-          <div style={{fontSize:".72rem",color:"#999",marginBottom:".3rem",fontWeight:600,textTransform:"uppercase"}}>
-            {isMSTF?"Time Under Load (sec)":ex.unit==="sec"?"Duration (sec)":"Reps"}</div>
-          <MiniChart points={history} color={R.color} targetMin={isMSTF?90:undefined} targetMax={isMSTF?120:undefined}/>
+          {ps?<>
+            <div style={{fontSize:".72rem",color:"#999",marginBottom:".3rem",fontWeight:600,textTransform:"uppercase"}}>
+              {isMSTF?"TUL — Avg L/R (sec)":"Reps — Avg L/R"}</div>
+            <MiniChart points={history} color={R.color} targetMin={isMSTF?90:undefined} targetMax={isMSTF?120:undefined}/>
+            {hasLR&&<div style={{display:"flex",gap:".5rem",marginTop:".5rem"}}>
+              {lh.length>0&&<div style={{flex:1}}><div style={{fontSize:".65rem",color:"#3498db",fontWeight:700,marginBottom:".2rem"}}>LEFT</div>
+                <MiniChart points={lh} color="#3498db" targetMin={isMSTF?90:undefined} targetMax={isMSTF?120:undefined}/></div>}
+              {rh.length>0&&<div style={{flex:1}}><div style={{fontSize:".65rem",color:"#e67e22",fontWeight:700,marginBottom:".2rem"}}>RIGHT</div>
+                <MiniChart points={rh} color="#e67e22" targetMin={isMSTF?90:undefined} targetMax={isMSTF?120:undefined}/></div>}
+            </div>}
+          </>:<>
+            <div style={{fontSize:".72rem",color:"#999",marginBottom:".3rem",fontWeight:600,textTransform:"uppercase"}}>
+              {isMSTF?"Time Under Load (sec)":ex.unit==="sec"?"Duration (sec)":"Reps"}</div>
+            <MiniChart points={history} color={R.color} targetMin={isMSTF?90:undefined} targetMax={isMSTF?120:undefined}/>
+          </>}
           {weightHistory.length>0&&<>
-            <div style={{fontSize:".72rem",color:"#999",marginTop:".75rem",marginBottom:".3rem",fontWeight:600,textTransform:"uppercase"}}>Weight (lbs)</div>
+            <div style={{fontSize:".72rem",color:"#999",marginTop:".75rem",marginBottom:".3rem",fontWeight:600,textTransform:"uppercase"}}>Weight (lbs){ps?" — Avg L/R":""}</div>
             <MiniChart points={weightHistory} color="#c4713b"/></>}
         </div>)})}
 
