@@ -25,15 +25,20 @@ input[type="number"],input[type="text"],input[type="date"]{-webkit-appearance:no
 </head>
 <body>
 <div id="root"></div>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 <script type="text/babel">
 const{useState,useEffect,useCallback,useRef}=React;
 const FIREBASE_CONFIG={apiKey:"AIzaSyALt3bUT-v5ALd17XoZXTZbdOKE4Q-O7-I",authDomain:"workout-journal-2adcb.firebaseapp.com",projectId:"workout-journal-2adcb",storageBucket:"workout-journal-2adcb.firebasestorage.app",messagingSenderId:"682553388016",appId:"1:682553388016:web:91116f411f4145da0f8b35"};
-const app=firebase.initializeApp(FIREBASE_CONFIG);const db=firebase.firestore(app);try{db.enablePersistence({synchronizeTabs:true}).catch(function(){})}catch(e){}
+
+let db=null;
+if(typeof firebase!=="undefined"){
+  try{const app=firebase.initializeApp(FIREBASE_CONFIG);db=firebase.firestore(app)}
+  catch(e){console.warn("Firebase init failed:",e)}
+}
 const WORDS=["IRON","STEEL","PLANK","SQUAT","LUNGE","PRESS","RIDGE","BLAZE","STORM","FORGE","STONE","SWIFT","BRAVO","CEDAR","CLIFF","DELTA","EAGLE","FLINT","GROVE","HAWK","MAPLE","NORTH","OCEAN","PIKE","QUEST","RIVER","SAGE","TRAIL","VIGOR","WOLF","BOLT","CREST","DAWN","EMBER","FROST","GRIT","HIKE","JADE","KEEN","LYNX"];
 function generateSyncCode(){return`${WORDS[Math.floor(Math.random()*WORDS.length)]}-${WORDS[Math.floor(Math.random()*WORDS.length)]}-${Math.floor(1000+Math.random()*9000)}`}
 const SYNC_CODE_KEY="workout-sync-code",LOCAL_DATA_KEY="workout-progress-v4";
@@ -59,9 +64,12 @@ const ROUTINES={
     day3:{label:"Day 3",title:"Lower Body + Core",color:"#2d5a3d",bg:"#e8f0eb",
       warmup:[{name:"Bodyweight Squats",sets:"10 slow reps",note:"Shoulder-width, sit back. Control."},{name:"Leg Swings",sets:"10 ea. leg, ea. dir",note:"Hold wall. Forward/back, side/side."},{name:"Ankle Circles",sets:"10 ea. dir, ea. foot",note:"Rotate ankle in circles."}],
       exercises:[
+        {id:"hipcars",perSide:true,name:"Hip CARs",target:"10 reps ea. direction",unit:"reps",note:"Stand on one leg (hold wall for balance). Lift opposite knee to hip height. Slowly rotate the hip in the largest circle you can control — knee goes out to the side, behind you, and back around. 10 slow circles in one direction, then reverse for 10 more. Switch legs. Maintains full hip joint range of motion and sends neurological signals that preserve joint health. Go slower, not bigger."},
+        {id:"lungelift",perSide:true,name:"Deep Lunge Lift",target:"10 reps ea. side",unit:"reps",note:"Start in a deep lunge with back knee on the floor and front foot flat. Drive through the front heel to stand up tall, then lower back down with control. 10 reps one side, then switch. Opens the hip flexors, activates the glutes, and builds the hip mobility needed for squats and lunges. Keep torso upright throughout."},
+        {id:"hipplane",perSide:true,name:"Hip Airplane",target:"10 reps ea. side",unit:"reps",note:"Stand on one leg and hinge forward until torso is roughly parallel to the floor (like a single-leg RDL position). From there, slowly rotate your hips open (chest turns toward the standing leg) then rotate closed. That's one rep. 10 rotations per side. Builds hip stability, rotational control, and balance. Hold a wall if needed at first."},
         {id:"goblet",name:"Goblet Squat",target:"2–3 × 12–15",unit:"reps",hasWeight:true,note:"DB at chest 10–25 lb. Chest up, weight in heels."},
         {id:"bss",perSide:true,name:"DB Bulgarian Split Squat",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Rear foot on a chair or bench behind you. Lower until front thigh is parallel to floor. Front knee tracks over toes. Hold DBs at sides. Builds single-leg strength, corrects imbalances, and challenges pelvic stability. Start bodyweight, add 8–15 lb DBs when stable."},
-        {id:"bridge",name:"Glute Bridge",target:"2–3 × 15",unit:"reps",note:"Drive hips up, squeeze glutes 2s. Progress: single-leg."},
+        {id:"bridge",name:"Glute Bridge",target:"2 × 15",unit:"reps",note:"Lie on back, knees bent, feet flat. Drive hips up by squeezing glutes, forming a straight line from shoulders to knees. Hold 2 seconds at top. Lower slowly. Progress to single-leg when 2×15 feels easy."},
         {id:"latlunge",perSide:true,name:"Lateral Lunge",target:"2–3 × 10 ea.",unit:"reps",hasWeight:true,note:"Step wide to one side, bend that knee and sit hips back while keeping other leg straight. Push back to standing. Trains the frontal (side-to-side) plane that most routines miss. Hold one DB at chest for load. Essential for real-world cutting and lateral movement."},
         {id:"calf",perSide:true,name:"Single-Leg Calf Raise",target:"2–3 × 12–15 ea.",unit:"reps",note:"Stand on one foot (hold wall for balance). Rise on toes, 1s hold, lower slowly over 3 sec. Do all reps on one leg, then switch. Builds calf strength AND balance simultaneously."},
         {id:"slrdl",perSide:true,name:"DB Single-Leg Romanian Deadlift",target:"2–3 × 8–10 ea.",unit:"reps",hasWeight:true,note:"Hold one dumbbell in opposite hand from standing leg. Hinge forward at hips, extending free leg behind you. Lower DB toward floor keeping back flat. Return to standing. Targets hamstrings, glutes, and balance. Start with 8–10 lb — balance is the real challenge. Touch a wall if needed at first."}],
@@ -75,7 +83,7 @@ const ROUTINES={
         {id:"climbers",name:"Mountain Climbers",target:"45s/15s rest",unit:"rounds",note:"Push-up position, alternate knees. ~1/sec."},
         {id:"powerpush",name:"Power Push-Up",target:"45s/15s rest",unit:"rounds",note:"Standard push-up but push off the floor explosively so hands briefly leave the ground. Land soft, lower with control. Builds upper-body explosive power. Low-impact option: fast-tempo regular push-ups with a strong lockout."},
         {id:"flow",name:"Flexibility Flow",target:"12–15 min",unit:"min",note:"Sun salutations → Warriors → Pigeon → Twist → Child's pose."}],
-      cooldown:[{name:"Pigeon Pose",sets:"45s each side",note:"Deep hip stretch."},{name:"Hamstring Stretch",sets:"30s each leg",note:"On back, lift leg, hold behind thigh."},{name:"Single-Leg Balance Hold",sets:"30s each leg",note:"Stand on one foot, eyes open. When that's easy, close your eyes. Builds the balance and proprioception that prevents falls as you age. Do this barefoot if possible."},{name:"Child's Pose",sets:"60s",note:"Final rest. Breathe deeply."}]},
+      cooldown:[{name:"Hip CARs",sets:"10 reps ea. dir, ea. side",note:"Stand on one leg, lift knee high, slowly rotate hip in largest circle you can control. 10 one direction, reverse for 10 more. Switch legs."},{name:"Hip Airplanes",sets:"10 reps ea. side",note:"Single-leg hinge, rotate hips open then closed. Builds rotational hip stability."},{name:"Pigeon Pose",sets:"45s each side",note:"Deep hip stretch."},{name:"Hamstring Stretch",sets:"30s each leg",note:"On back, lift leg, hold behind thigh."},{name:"Single-Leg Balance Hold",sets:"30s each leg",note:"Stand on one foot, eyes open. When that's easy, close your eyes. Do barefoot if possible."},{name:"Child's Pose",sets:"60s",note:"Final rest. Breathe deeply."}]},
     dayH:{label:"Day 4",title:"HIIT Conditioning (Optional)",color:"#c0392b",bg:"#fdecea",
       warmup:[{name:"Light Jog in Place",sets:"60s",note:"Easy pace, get blood flowing."},{name:"Leg Swings + Arm Circles",sets:"60s",note:"Dynamic stretches — forward/back swings, shoulder circles."},{name:"5 Squats + 5 Push-Ups",sets:"1 round",note:"Wake up the muscles. No rush."}],
       exercises:[
@@ -104,7 +112,7 @@ const ROUTINES={
         {id:"m_fhold",name:"Slow Farmer's Hold",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Stand tall holding dumbbells at your sides. Squeeze handles as hard as possible. Shoulders back and down, core braced. Hold with full attention until grip fails. Builds grip strength — one of the strongest predictors of longevity. Start 15–25 lb each hand."}],
       cooldown:[{name:"Standing Forward Fold",sets:"45s",note:"Bend at hips, let arms hang. Breathe into hamstrings."},{name:"Chest Opener",sets:"30s",note:"Clasp hands behind back, lift gently. Open chest."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice where your muscles are working. Breathe into each area."}]},
     workoutB:{label:"Workout B",title:"Full Body — Lower Focus",color:"#5b3a8c",bg:"#f0ecf5",
-      warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
+      warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."},{name:"Hip CARs",sets:"10 reps ea. dir, ea. side",note:"Stand on one leg (hold wall). Lift knee high, slowly rotate hip in largest circle you can control. 10 one direction, reverse 10. Switch legs."},{name:"Deep Lunge Lifts",sets:"10 reps ea. side",note:"Deep lunge, back knee on floor. Drive through front heel to stand, lower with control. Opens hip flexors, activates glutes."},{name:"Hip Airplanes",sets:"10 reps ea. side",note:"Single-leg hinge, rotate hips open then closed. Builds hip stability and rotational control."}],
       exercises:[
         {id:"m_pushup2",chartId:"slow_pushup",name:"Slow Push-Up",target:"Target: 90–120s TUL",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier. Ensures Workout B covers push movement for full-body balance."},
         {id:"m_bridge",name:"Slow Glute Bridge",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to raise hips, squeeze 2 sec at top, 10 sec to lower. Don't touch floor between reps. DB option: rest a dumbbell on hips for added resistance. To failure."},
@@ -132,7 +140,7 @@ function SyncCodeScreen({onCodeSet}){
   const[mode,setMode]=useState(null);const[ic,setIc]=useState("");const[err,setErr]=useState("");
   const createNew=()=>{const c=generateSyncCode();localStorage.setItem(SYNC_CODE_KEY,c);onCodeSet(c)};
   const join=async()=>{const c=ic.trim().toUpperCase();if(!c||c.split("-").length<2){setErr("Enter a valid sync code");return}
-    try{const d=await db.collection("trackers").doc(c).get();if(!d.exists){setErr("No tracker found with that code.");return}localStorage.setItem(SYNC_CODE_KEY,c);onCodeSet(c)}catch(e){setErr("Connection error.")}};
+    try{if(!db){setErr("Firebase not available. Check your connection and refresh.");return}const d=await db.collection("trackers").doc(c).get();if(!d.exists){setErr("No tracker found with that code.");return}localStorage.setItem(SYNC_CODE_KEY,c);onCodeSet(c)}catch(e){setErr("Connection error. Check your internet and try again.")}};
   return(<div style={{padding:"2rem 1.5rem",maxWidth:440,margin:"0 auto"}}>
     <div style={{textAlign:"center",marginBottom:"2rem"}}><div style={{fontSize:"3rem"}}>💪</div><h1 style={{fontSize:"1.5rem",color:"#2d5a3d",margin:".5rem 0 .25rem"}}>Workout Tracker</h1><p style={{color:"#999",fontSize:".88rem"}}>Syncs across all your devices</p></div>
     {mode===null&&<div style={{display:"flex",flexDirection:"column",gap:".75rem"}}>
@@ -210,15 +218,15 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
 
   useEffect(()=>{
     if(!syncCode)return;
-    const unsub=db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
+    const unsub=db&&db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
       if(isEditing.current){setSynced(true);return}
       if(doc.exists){const r=doc.data();latestData.current=r;setData(r);
         if(r.startDate){const s=new Date(r.startDate),n=new Date(),d=Math.floor((n-s)/(7*24*60*60*1000));setCurrentWeek(Math.max(1,d+1))}
         setSynced(true)}else{
         const init={startDate:new Date().toISOString().split("T")[0],routines:{}};
-        db.collection("trackers").doc(syncCode).set(init);latestData.current=init;setData(init);setSynced(true)}
+        db&&db.collection("trackers").doc(syncCode).set(init).catch(()=>{});latestData.current=init;setData(init);setSynced(true)}
     },()=>setSynced(false));
-    return()=>unsub();
+    return()=>{if(unsub)unsub()};
   },[syncCode]);
 
   const save=useCallback(nd=>{
@@ -229,7 +237,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     try{localStorage.setItem(LOCAL_DATA_KEY,JSON.stringify(nd))}catch{}
     if(saveTimeout.current)clearTimeout(saveTimeout.current);
     saveTimeout.current=setTimeout(()=>{
-      db.collection("trackers").doc(syncCode).set(nd).then(()=>{
+      db&&db.collection("trackers").doc(syncCode).set(nd).then(()=>{
         setTimeout(()=>{isEditing.current=false},1000);
       }).catch(()=>{})},1500)},[syncCode]);
 
@@ -470,11 +478,11 @@ function ProgressView({syncCode,routine}){
 
   useEffect(()=>{
     if(!syncCode)return;
-    const unsub=db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
+    const unsub=db&&db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
       if(doc.exists)setData(doc.data());
       setLoading(false);
     },()=>setLoading(false));
-    return()=>unsub();
+    return()=>{if(unsub)unsub()};
   },[syncCode]);
 
   const getAllExercises=()=>Object.values(R.days).flatMap(d=>d.exercises);
@@ -532,11 +540,13 @@ function ProgressView({syncCode,routine}){
 
   const restoreExercise=(exId)=>{
     const nd=JSON.parse(JSON.stringify(data));
+    if(!nd.routines)nd.routines={};
+    if(!nd.routines[routine])nd.routines[routine]={weeks:{},exerciseLib:{},restored:{}};
     if(!nd.routines[routine].restored)nd.routines[routine].restored={};
     if(!nd.routines[routine].restored[activeDay])nd.routines[routine].restored[activeDay]=[];
     if(!nd.routines[routine].restored[activeDay].includes(exId)){
       nd.routines[routine].restored[activeDay].push(exId);
-      db.collection("trackers").doc(syncCode).set(nd);setData(nd)}};
+      db&&db.collection("trackers").doc(syncCode).set(nd).catch(()=>{});setData(nd)}};
 
   return(<div>
     <div style={{background:R.color,color:"#fff",padding:"1.25rem 1rem",textAlign:"center"}}>
