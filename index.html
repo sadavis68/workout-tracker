@@ -271,11 +271,21 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     const restoredExs=restored.filter(id=>lib[id]&&!hardcoded.some(ex=>ex.id===id)).map(id=>({id,...lib[id],isRestored:true}));
     return[...hardcoded,...restoredExs]};
   const isDayComplete=(w,d)=>{const dd=rData?.weeks?.[`w${w}`]?.[d];if(!dd)return false;return R.days[d].exercises.every(ex=>dd[ex.id]?.done)};
+  const isDayLocked=(w,d)=>!!rData?.weeks?.[`w${w}`]?.[d]?._locked;
+  const lockDay=()=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
+    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};
+    if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
+    if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
+    nd.routines[routine].weeks[wk][activeDay]._locked=true;save(nd)};
+  const unlockDay=()=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
+    if(nd.routines?.[routine]?.weeks?.[wk]?.[activeDay]){nd.routines[routine].weeks[wk][activeDay]._locked=false;save(nd)}};
+  const startNewSession=()=>{setCurrentWeek(currentWeek+1)};
   const getWC=w=>dayKeys.filter(d=>isDayComplete(w,d)).length;
   const resetData=()=>{if(confirm("Erase ALL progress for this routine? Exercise library will be preserved.")){const nd=JSON.parse(JSON.stringify(latestData.current));if(!nd.routines)nd.routines={};const lib=nd.routines[routine]?.exerciseLib||{};nd.routines[routine]={weeks:{},exerciseLib:lib,restored:{}};save(nd);setCurrentWeek(1)}};
   const disconnect=()=>{if(confirm("Disconnect this device?")){localStorage.removeItem(SYNC_CODE_KEY);localStorage.removeItem(LOCAL_DATA_KEY);setSyncCode(null)}};
 
   const plan=R.days[activeDay];const activeExercises=getActiveExercises(activeDay);const cw=getWC(currentWeek);const isMSTF=routine==="mstf";
+  const locked=isDayLocked(currentWeek,activeDay);const dayData=rData?.weeks?.[`w${currentWeek}`]?.[activeDay]||{};const hasData=activeExercises.some(ex=>dayData[ex.id]?.done||dayData[ex.id]?.reps||dayData[ex.id]?.reps_l);
   const pastWeeks=[];for(let w=currentWeek-1;w>=1;w--){if(rData?.weeks?.[`w${w}`])pastWeeks.push(w)}
 
   return(<div>
@@ -301,9 +311,9 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
 
     {view==="log"?<>
       <div style={{display:"flex",gap:".4rem",padding:"0 1rem .75rem"}}>
-        {dayKeys.map(key=>{const day=R.days[key];const comp=isDayComplete(currentWeek,key);const dd=getDayDate(currentWeek,key);
+        {dayKeys.map(key=>{const day=R.days[key];const comp=isDayComplete(currentWeek,key);const lk=isDayLocked(currentWeek,key);const dd=getDayDate(currentWeek,key);
           return(<button key={key} onClick={()=>setActiveDay(key)} style={{flex:1,padding:".6rem .25rem",border:activeDay===key?`2px solid ${day.color}`:"2px solid transparent",borderRadius:"10px",cursor:"pointer",fontSize:".75rem",fontWeight:600,textAlign:"center",background:activeDay===key?day.bg:"#fff",color:day.color,boxShadow:"0 1px 4px rgba(0,0,0,.06)",position:"relative"}}>
-            {comp&&<span style={{position:"absolute",top:3,right:6,fontSize:".7rem"}}>✅</span>}
+            {lk?<span style={{position:"absolute",top:3,right:6,fontSize:".7rem"}}>🔒</span>:comp&&<span style={{position:"absolute",top:3,right:6,fontSize:".7rem"}}>✅</span>}
             <div>{day.label}</div><div style={{fontSize:".65rem",fontWeight:400,opacity:.75,marginTop:1}}>{day.title}</div>
             {dd&&<div style={{fontSize:".6rem",fontWeight:400,opacity:.55,marginTop:1}}>{new Date(dd+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"})}</div>}
           </button>)})}
@@ -311,7 +321,18 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
 
       <div style={{padding:"0 1rem .75rem"}}><div style={{background:"#fff",borderRadius:"10px",padding:".65rem 1rem",boxShadow:"0 1px 4px rgba(0,0,0,.06)",display:"flex",alignItems:"center",gap:".6rem"}}>
         <span style={{fontSize:".82rem",fontWeight:600,color:"#666",whiteSpace:"nowrap"}}>📅 Date:</span>
-        <input type="date" value={getDayDate(currentWeek,activeDay)||new Date().toISOString().split("T")[0]} onChange={e=>setDayDate(e.target.value)} style={{flex:1,padding:".4rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".9rem",fontFamily:"inherit",background:"#fafaf8",outline:"none"}}/></div></div>
+        <input type="date" value={getDayDate(currentWeek,activeDay)||new Date().toISOString().split("T")[0]} onChange={e=>setDayDate(e.target.value)} disabled={locked} style={{flex:1,padding:".4rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".9rem",fontFamily:"inherit",background:locked?"#f0f0f0":"#fafaf8",outline:"none"}}/>
+        <span style={{fontSize:".72rem",fontWeight:600,padding:".2rem .5rem",borderRadius:"8px",background:locked?"#e8f5e9":"#f5f0eb",color:locked?"#2e7d32":"#999"}}>{locked?"🔒 Locked":"🔓 Open"}</span>
+      </div></div>
+
+      {locked&&<div style={{margin:"0 1rem .75rem",padding:".85rem 1rem",background:"#e8f5e9",borderRadius:"10px",border:"1px solid #a5d6a7",textAlign:"center"}}>
+        <div style={{fontSize:".85rem",fontWeight:700,color:"#2e7d32",marginBottom:".4rem"}}>🔒 Workout Locked</div>
+        <div style={{fontSize:".78rem",color:"#555",marginBottom:".6rem",lineHeight:1.4}}>This session is complete and saved. Start a new session to log fresh data.</div>
+        <div style={{display:"flex",gap:".5rem",justifyContent:"center"}}>
+          <button onClick={startNewSession} style={{padding:".5rem 1rem",border:"none",borderRadius:"8px",background:R.color,color:"#fff",fontWeight:600,fontSize:".82rem",cursor:"pointer"}}>Start New Session →</button>
+          <button onClick={unlockDay} style={{padding:".5rem .8rem",border:"1px solid #ccc",borderRadius:"8px",background:"#fff",color:"#999",fontWeight:600,fontSize:".78rem",cursor:"pointer"}}>Unlock</button>
+        </div>
+      </div>}
 
       {isMSTF&&activeDay!=="workoutH"&&<div style={{margin:"0 1rem .75rem",padding:".6rem .85rem",background:"#f0ecf5",borderRadius:"8px",fontSize:".78rem",color:"#5b3a8c",lineHeight:1.5}}>
         <strong>MSTF tempo:</strong> 10 sec up, 10 sec down. 1 set to failure. Target 90–120 sec TUL per exercise. Under 90s → go lighter. Over 120s → go heavier. Use bands, dumbbells, or bodyweight.</div>}
@@ -319,7 +340,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
       {(activeDay==="dayH"||activeDay==="workoutH")&&<div style={{margin:"0 1rem .75rem",padding:".6rem .85rem",background:"#fdecea",borderRadius:"8px",fontSize:".78rem",color:"#c0392b",lineHeight:1.5}}>
         <strong>Phasing guide:</strong> Don't add HIIT until you've built a 4–6 week base with your strength routine. Start with 2 rounds and 45s rest. When that feels manageable, progress to 3 rounds and 30s rest. Each exercise lists a "Progression" — only move to those when the base version feels genuinely easy. Listen to your joints, not your ego.</div>}
 
-      <div style={{padding:"0 1rem"}}>
+      <div style={{padding:"0 1rem",opacity:locked?0.7:1,pointerEvents:locked?"none":"auto"}}>
         {activeExercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);const last=getLastEntry(ex.id);const ps=ex.perSide;
           const lastStr=last?(ps?
             (last.reps_l||last.reps_r?`L: ${last.reps_l||"—"}${isMSTF?"s":""}${last.weight_l?` @ ${last.weight_l}lb`:""} | R: ${last.reps_r||"—"}${isMSTF?"s":""}${last.weight_r?` @ ${last.weight_r}lb`:""}`:""):
@@ -370,6 +391,14 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
               <input type="text" value={entry.notes||""} onChange={e=>updateEntry(ex.id,"notes",e.target.value,ex)} placeholder={isMSTF?"Reached failure? Band/DB/BW? Weight?":"How did it feel?"} style={{...IS,fontSize:".82rem"}}/></div>
           </div>)})}
       </div>
+
+      {!locked&&<div style={{padding:"0 1rem",marginTop:".5rem",marginBottom:"1rem"}}>
+        <button onClick={hasData?lockDay:undefined} disabled={!hasData} style={{width:"100%",padding:".85rem",border:"none",borderRadius:"12px",background:hasData?"#2e7d32":"#ccc",color:"#fff",fontSize:".95rem",fontWeight:700,cursor:hasData?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:".5rem",opacity:hasData?1:0.5}}>
+          🔒 {hasData?"Lock Workout — Session Complete":"Lock Workout (enter data first)"}
+        </button>
+        {hasData&&<div style={{textAlign:"center",fontSize:".72rem",color:"#999",marginTop:".4rem",lineHeight:1.4}}>
+          Locking saves this session and clears the fields for your next workout.</div>}
+      </div>}
     </>:
     <div style={{padding:"0 1rem"}}>
       <WS week={currentWeek} rData={rData} label="This Week" R={R} routine={routine}/>
