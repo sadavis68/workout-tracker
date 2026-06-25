@@ -201,6 +201,27 @@ function RoutinePicker({routine,setRoutine,setPage}){
 }
 
 // ═══ TRACKER ═══
+// ═══ COLLAPSIBLE PHASE BLOCK (warm-up / cool-down) ═══
+function PhaseBlock({title,items,color,icon}){
+  const[open,setOpen]=useState(false);
+  if(!items||items.length===0)return null;
+  return(<div style={{margin:"0 1rem .65rem"}}>
+    <button onClick={()=>setOpen(!open)} style={{width:"100%",padding:".6rem .85rem",border:"1px solid #e0dbd5",borderRadius:open?"10px 10px 0 0":"10px",background:open?"#fafaf8":"#fff",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"0 1px 3px rgba(0,0,0,.04)"}}>
+      <span style={{fontSize:".82rem",fontWeight:700,color:color}}>{icon} {title}</span>
+      <span style={{fontSize:".8rem",color:"#999",transition:"transform .2s",transform:open?"rotate(180deg)":"none"}}>▼</span>
+    </button>
+    {open&&<div style={{border:"1px solid #e0dbd5",borderTop:"none",borderRadius:"0 0 10px 10px",background:"#fafaf8",padding:".5rem .85rem"}}>
+      {items.map((item,i)=>(<div key={i} style={{padding:".4rem 0",borderBottom:i<items.length-1?"1px solid #eee":"none"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:".4rem"}}>
+          <span style={{fontWeight:600,fontSize:".85rem",color:"#333"}}>{item.name}</span>
+          <span style={{fontSize:".72rem",color:color,fontWeight:700,whiteSpace:"nowrap"}}>{item.target||item.sets}</span>
+        </div>
+        <div style={{fontSize:".75rem",color:"#888",marginTop:".1rem",lineHeight:1.4}}>{item.note}</div>
+      </div>))}
+    </div>}
+  </div>);
+}
+
 function Tracker({syncCode,setSyncCode,routine,setRoutine}){
   const R=ROUTINES[routine];const dayKeys=Object.keys(R.days);
   const[data,setData]=useState({startDate:new Date().toISOString().split("T")[0],routines:{}});
@@ -348,6 +369,8 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
       {(activeDay==="dayH"||activeDay==="workoutH")&&<div style={{margin:"0 1rem .75rem",padding:".6rem .85rem",background:"#fdecea",borderRadius:"8px",fontSize:".78rem",color:"#c0392b",lineHeight:1.5}}>
         <strong>Phasing guide:</strong> Don't add HIIT until you've built a 4–6 week base with your strength routine. Start with 2 rounds and 45s rest. When that feels manageable, progress to 3 rounds and 30s rest. Each exercise lists a "Progression" — only move to those when the base version feels genuinely easy. Listen to your joints, not your ego.</div>}
 
+      <PhaseBlock title="Warm-Up" items={plan.warmup} color={R.color} icon="🔥"/>
+
       <div style={{padding:"0 1rem",opacity:locked?0.7:1,pointerEvents:locked?"none":"auto"}}>
         {activeExercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);const last=getLastEntry(ex.id);const ps=ex.perSide;
           const lastStr=last?(ps?
@@ -399,6 +422,8 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
               <input type="text" value={entry.notes||""} onChange={e=>updateEntry(ex.id,"notes",e.target.value,ex)} placeholder={isMSTF?"Reached failure? Band/DB/BW? Weight?":"How did it feel?"} style={{...IS,fontSize:".82rem"}}/></div>
           </div>)})}
       </div>
+
+      <PhaseBlock title="Cool-Down" items={plan.cooldown} color={R.color} icon="❄️"/>
 
       {!locked&&<div style={{padding:"0 1rem",marginTop:".5rem",marginBottom:"1rem"}}>
         <button onClick={hasData?lockDay:undefined} disabled={!hasData} style={{width:"100%",padding:".85rem",border:"none",borderRadius:"12px",background:hasData?"#2e7d32":"#ccc",color:"#fff",fontSize:".95rem",fontWeight:700,cursor:hasData?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:".5rem",opacity:hasData?1:0.5}}>
