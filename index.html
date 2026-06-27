@@ -201,6 +201,85 @@ function RoutinePicker({routine,setRoutine,setPage}){
 }
 
 // ═══ TRACKER ═══
+// ═══ AUDIO BEEP ═══
+function playBeep(freq,duration,count){
+  try{const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    let t=ctx.currentTime;
+    for(let i=0;i<(count||1);i++){
+      const osc=ctx.createOscillator();const gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.frequency.value=freq||880;osc.type="sine";
+      gain.gain.setValueAtTime(0.3,t);
+      gain.gain.exponentialRampToValueAtTime(0.01,t+(duration||0.15));
+      osc.start(t);osc.stop(t+(duration||0.15));
+      t+=0.2;
+    }
+  }catch(e){}
+}
+
+// ═══ EXERCISE TIMER (MSTF 2-min countdown) ═══
+function ExerciseTimer({onStop,color}){
+  const[running,setRunning]=useState(false);
+  const[timeLeft,setTimeLeft]=useState(120);
+  const[finished,setFinished]=useState(false);
+  const[hitZone,setHitZone]=useState(false);
+  const intervalRef=useRef(null);
+  const startRef=useRef(null);
+
+  const start=()=>{setTimeLeft(120);setRunning(true);setFinished(false);setHitZone(false);startRef.current=Date.now();
+    intervalRef.current=setInterval(()=>{
+      const elapsed=Math.floor((Date.now()-startRef.current)/1000);
+      const remaining=Math.max(0,120-elapsed);
+      setTimeLeft(remaining);
+      if(elapsed===90&&!hitZone){setHitZone(true);playBeep(660,0.12,2)}
+      if(remaining<=0){clearInterval(intervalRef.current);setRunning(false);setFinished(true);playBeep(880,0.2,3);onStop(120)}
+    },200)};
+
+  const stop=()=>{clearInterval(intervalRef.current);
+    const elapsed=Math.min(120,Math.floor((Date.now()-startRef.current)/1000));
+    setRunning(false);setFinished(true);setTimeLeft(120-elapsed);onStop(elapsed)};
+
+  const reset=()=>{setTimeLeft(120);setFinished(false);setHitZone(false)};
+
+  useEffect(()=>()=>clearInterval(intervalRef.current),[]);
+
+  const elapsed=120-timeLeft;
+  const inZone=elapsed>=90&&elapsed<=120;
+  const under90=elapsed<90;
+  const mins=Math.floor(timeLeft/60);
+  const secs=timeLeft%60;
+  const pct=elapsed/120;
+
+  if(!running&&!finished){
+    return(<button onClick={start} style={{width:"100%",padding:".6rem",border:`2px dashed ${color||"#5b3a8c"}`,borderRadius:"10px",background:"transparent",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:".4rem",fontSize:".85rem",fontWeight:600,color:color||"#5b3a8c",marginBottom:".4rem"}}>
+      ▶ Start Timer — 2:00
+    </button>)}
+
+  const bgColor=finished?(elapsed>=120?"#2980b9":inZone?"#27ae60":"#e67e22"):(inZone?"#27ae60":"transparent");
+  const txtColor=running&&!inZone?(color||"#5b3a8c"):"#fff";
+
+  return(<div style={{marginBottom:".4rem"}}>
+    <div style={{background:bgColor,border:running&&!inZone?`2px solid ${color||"#5b3a8c"}`:"none",borderRadius:"10px",padding:".5rem .75rem",display:"flex",alignItems:"center",justifyContent:"space-between",gap:".5rem",transition:"background .3s"}}>
+      <div style={{display:"flex",alignItems:"baseline",gap:".3rem"}}>
+        <span style={{fontSize:"1.6rem",fontWeight:700,fontFamily:"monospace",color:running?(inZone?"#fff":(color||"#5b3a8c")):"#fff",letterSpacing:".05em"}}>
+          {mins}:{secs.toString().padStart(2,"0")}
+        </span>
+        {running&&<span style={{fontSize:".7rem",color:inZone?"rgba(255,255,255,.8)":(color||"#5b3a8c"),fontWeight:600}}>
+          {elapsed}s elapsed{inZone?" ✓ ZONE":""}
+        </span>}
+      </div>
+      {running?<button onClick={stop} style={{padding:".4rem .8rem",border:"none",borderRadius:"8px",background:inZone?"rgba(255,255,255,.3)":"#e74c3c",color:"#fff",fontWeight:700,fontSize:".85rem",cursor:"pointer"}}>⏹ Stop</button>
+      :<div style={{display:"flex",gap:".3rem",alignItems:"center"}}>
+        <span style={{fontSize:".82rem",fontWeight:700,color:"#fff"}}>{elapsed}s{elapsed>=120?" — increase resistance":inZone?" — sweet spot":" — reduce resistance"}</span>
+        <button onClick={reset} style={{padding:".3rem .6rem",border:"1px solid rgba(255,255,255,.4)",borderRadius:"6px",background:"transparent",color:"#fff",fontSize:".72rem",cursor:"pointer",fontWeight:600}}>Reset</button>
+      </div>}
+    </div>
+    {running&&<div style={{height:"4px",borderRadius:"2px",background:"#e0dbd5",marginTop:".3rem",overflow:"hidden"}}>
+      <div style={{height:"100%",borderRadius:"2px",background:inZone?"#27ae60":(color||"#5b3a8c"),width:`${pct*100}%`,transition:"width .2s"}}/>
+    </div>}
+  </div>);
+}
+
 // ═══ COLLAPSIBLE PHASE BLOCK (warm-up / cool-down) ═══
 function PhaseBlock({title,items,color,icon}){
   const[open,setOpen]=useState(false);
@@ -393,8 +472,10 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
             </div>
             {ps?[["l","Left"],["r","Right"]].map(([s,label])=>{
               const rv=entry[`reps_${s}`]||"";const wv=entry[`weight_${s}`]||"";
-              return(<div key={s} style={{display:"flex",gap:".4rem",flexWrap:"wrap",alignItems:"flex-end",marginBottom:".35rem",paddingLeft:".4rem",borderLeft:`3px solid ${s==="l"?"#3498db":"#e67e22"}`}}>
-                <div style={{width:"28px",fontSize:".7rem",fontWeight:700,color:s==="l"?"#3498db":"#e67e22",paddingBottom:".5rem"}}>{label}</div>
+              return(<div key={s} style={{marginBottom:".5rem",paddingLeft:".4rem",borderLeft:`3px solid ${s==="l"?"#3498db":"#e67e22"}`}}>
+                <div style={{fontSize:".7rem",fontWeight:700,color:s==="l"?"#3498db":"#e67e22",marginBottom:".3rem"}}>{label}</div>
+                {ex.unit==="tul"&&<ExerciseTimer onStop={(t)=>updateEntry(ex.id,`reps_${s}`,String(t),ex)} color={s==="l"?"#3498db":"#e67e22"}/>}
+                <div style={{display:"flex",gap:".4rem",flexWrap:"wrap",alignItems:"flex-end"}}>
                 {!isMSTF&&<div style={{flex:1,minWidth:"50px"}}><label style={{fontSize:".65rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Sets</label>
                   <input type="number" inputMode="numeric" value={entry[`sets_${s}`]||""} onChange={e=>updateEntry(ex.id,`sets_${s}`,e.target.value,ex)} placeholder="—" style={IS}/></div>}
                 <div style={{flex:1,minWidth:"50px"}}>
@@ -405,8 +486,11 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
                 </div>
                 {ex.hasWeight&&<div style={{flex:1,minWidth:"50px"}}><label style={{fontSize:".65rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Lbs</label>
                   <input type="number" inputMode="decimal" value={wv} onChange={e=>updateEntry(ex.id,`weight_${s}`,e.target.value,ex)} placeholder="—" style={IS}/></div>}
+                </div>
               </div>)})
-            :<div style={{display:"flex",gap:".4rem",flexWrap:"wrap"}}>
+            :<>
+              {ex.unit==="tul"&&<ExerciseTimer onStop={(t)=>updateEntry(ex.id,"reps",String(t),ex)} color={R.color}/>}
+              <div style={{display:"flex",gap:".4rem",flexWrap:"wrap"}}>
               {!isMSTF&&<div style={{flex:1,minWidth:"60px"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Sets</label>
                 <input type="number" inputMode="numeric" value={entry.sets||""} onChange={e=>updateEntry(ex.id,"sets",e.target.value,ex)} placeholder="—" style={IS}/></div>}
               <div style={{flex:1,minWidth:"60px"}}>
@@ -417,7 +501,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
               </div>
               {ex.hasWeight&&<div style={{flex:1,minWidth:"60px"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Lbs</label>
                 <input type="number" inputMode="decimal" value={entry.weight||""} onChange={e=>updateEntry(ex.id,"weight",e.target.value,ex)} placeholder="—" style={IS}/></div>}
-            </div>}
+            </div></>}
             <div style={{marginTop:".4rem"}}><label style={{fontSize:".68rem",color:"#999",fontWeight:600,textTransform:"uppercase"}}>Notes</label>
               <input type="text" value={entry.notes||""} onChange={e=>updateEntry(ex.id,"notes",e.target.value,ex)} placeholder={isMSTF?"Reached failure? Band/DB/BW? Weight?":"How did it feel?"} style={{...IS,fontSize:".82rem"}}/></div>
           </div>)})}
