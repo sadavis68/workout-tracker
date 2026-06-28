@@ -41,8 +41,21 @@ if(typeof firebase!=="undefined"){
 }
 const WORDS=["IRON","STEEL","PLANK","SQUAT","LUNGE","PRESS","RIDGE","BLAZE","STORM","FORGE","STONE","SWIFT","BRAVO","CEDAR","CLIFF","DELTA","EAGLE","FLINT","GROVE","HAWK","MAPLE","NORTH","OCEAN","PIKE","QUEST","RIVER","SAGE","TRAIL","VIGOR","WOLF","BOLT","CREST","DAWN","EMBER","FROST","GRIT","HIKE","JADE","KEEN","LYNX"];
 function generateSyncCode(){return`${WORDS[Math.floor(Math.random()*WORDS.length)]}-${WORDS[Math.floor(Math.random()*WORDS.length)]}-${Math.floor(1000+Math.random()*9000)}`}
-const SYNC_CODE_KEY="workout-sync-code",LOCAL_DATA_KEY="workout-progress-v4";
+const SYNC_CODE_KEY="workout-sync-code",LOCAL_DATA_KEY="workout-progress-v4",APP_STATE_KEY="workout-app-state";
 const IS={width:"100%",padding:".45rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".95rem",fontFamily:"inherit",outline:"none",marginTop:".15rem",background:"#fafaf8"};
+
+// ═══ CALENDAR WEEK HELPERS ═══
+function getMonday(d){const dt=new Date(d);const day=dt.getDay();const diff=dt.getDate()-day+(day===0?-6:1);dt.setDate(diff);dt.setHours(0,0,0,0);return dt}
+function weekKey(date){const mon=getMonday(date);return`w${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,"0")}-${String(mon.getDate()).padStart(2,"0")}`}
+function weekKeyToDate(wk){if(!wk||!wk.startsWith("w"))return new Date();const parts=wk.slice(1).split("-");return new Date(parts[0],parts[1]-1,parts[2])}
+function formatWeekRange(wk){const mon=weekKeyToDate(wk);const sun=new Date(mon);sun.setDate(sun.getDate()+6);
+  const fmt=(d)=>d.toLocaleDateString(undefined,{month:"short",day:"numeric"});return`${fmt(mon)} – ${fmt(sun)}`}
+function shiftWeek(wk,delta){const d=weekKeyToDate(wk);d.setDate(d.getDate()+delta*7);return weekKey(d)}
+function getTodayStr(){const d=new Date();const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  return`${days[d.getDay()]}, ${d.toLocaleDateString(undefined,{month:"short",day:"numeric"})}`}
+function curWeekKey(){return weekKey(new Date())}
+function saveAppState(routine,activeDay,wk){try{localStorage.setItem(APP_STATE_KEY,JSON.stringify({routine,activeDay,wk,ts:Date.now()}))}catch(e){}}
+function loadAppState(){try{const s=localStorage.getItem(APP_STATE_KEY);return s?JSON.parse(s):null}catch(e){return null}}
 
 // ═══ ROUTINE DEFINITIONS ═══
 const ROUTINES={
@@ -107,7 +120,7 @@ const ROUTINES={
         {id:"m_row",name:"Slow Row",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: anchor at chest height, pull to ribs over 10 sec, return over 10 sec. DB: hinge 45° at hips, pull dumbbell to hip over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
         {id:"m_press",name:"Slow Overhead Press",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, press overhead over 10 sec, lower over 10 sec. DB: press dumbbells from shoulders overhead over 10 sec, lower over 10 sec. Don't lock out. Core braced. To failure."},
         {id:"m_squat",name:"Slow Squat",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to lower, pause at bottom, 10 sec to rise. Don't lock knees at top. Keep tension constant. Weight in heels. DB option: hold dumbbell at chest (goblet style) for added resistance. To failure."},
-        {id:"m_woodchop",perSide:true,name:"Slow DB Woodchop",target:"Target: 90–120s TUL ea.",unit:"tul",hasWeight:true,note:"Hold one DB with both hands. Rotate from low on one side to high on the other over 10 sec, return over 10 sec. Pivot feet. Full rotational control. Builds the twisting strength used in real-world movement — carrying groceries, reaching, turning. One side to failure, then switch. Start 8–12 lb."},
+        {id:"m_pallof",perSide:true,name:"Slow Pallof Press",target:"Target: 90–120s TUL ea.",unit:"tul",note:"Anchor band at chest height to your side. Hold handle at chest with both hands. Press arms straight out over 10 sec, resisting the band's pull to rotate you. Return to chest over 10 sec. Your core fights rotation the entire time — this is anti-rotation training that builds real-world functional stability. Face one direction to failure, then switch sides."},
         {id:"m_curl",name:"Slow Bicep Curl",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, curl over 10 sec, lower over 10 sec. DB: curl dumbbells over 10 sec, lower over 10 sec. Elbows pinned to ribs. No swinging. To failure."},
         {id:"m_fhold",name:"Slow Farmer's Hold",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Stand tall holding dumbbells at your sides. Squeeze handles as hard as possible. Shoulders back and down, core braced. Hold with full attention until grip fails. Builds grip strength — one of the strongest predictors of longevity. Start 15–25 lb each hand."}],
       cooldown:[{name:"Standing Forward Fold",sets:"45s",note:"Bend at hips, let arms hang. Breathe into hamstrings."},{name:"Chest Opener",sets:"30s",note:"Clasp hands behind back, lift gently. Open chest."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice where your muscles are working. Breathe into each area."}]},
@@ -159,9 +172,10 @@ function SyncCodeScreen({onCodeSet}){
 // ═══ MAIN APP ═══
 function App(){
   const[syncCode,setSyncCode]=useState(()=>localStorage.getItem(SYNC_CODE_KEY));
+  const saved=loadAppState();
   const[page,setPage]=useState("tracker");
-  const[routine,setRoutine]=useState(()=>localStorage.getItem("workout-routine")||"sc");
-  const changeRoutine=(r)=>{setRoutine(r);localStorage.setItem("workout-routine",r)};
+  const[routine,setRoutine]=useState(()=>saved?.routine||localStorage.getItem("workout-routine")||"sc");
+  const changeRoutine=(r)=>{setRoutine(r);localStorage.setItem("workout-routine",r);saveAppState(r,null,null)};
   if(!syncCode)return<SyncCodeScreen onCodeSet={setSyncCode}/>;
   const R=ROUTINES[routine];const themeColor=R.color;
   return(<div style={{paddingBottom:"4rem"}}>
@@ -303,9 +317,10 @@ function PhaseBlock({title,items,color,icon}){
 
 function Tracker({syncCode,setSyncCode,routine,setRoutine}){
   const R=ROUTINES[routine];const dayKeys=Object.keys(R.days);
+  const saved=loadAppState();
   const[data,setData]=useState({startDate:new Date().toISOString().split("T")[0],routines:{}});
-  const[currentWeek,setCurrentWeek]=useState(1);
-  const[activeDay,setActiveDay]=useState(dayKeys[0]);
+  const[curWeek,setCurWeek]=useState(()=>saved?.wk||curWeekKey());
+  const[activeDay,setActiveDay]=useState(()=>saved?.activeDay&&Object.keys(ROUTINES[saved?.routine||routine]?.days||{}).includes(saved.activeDay)?saved.activeDay:dayKeys[0]);
   const[view,setView]=useState("log");
   const[synced,setSynced]=useState(false);
   const[showSync,setShowSync]=useState(false);
@@ -314,15 +329,14 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
   const editTimer=useRef(null);
   const latestData=useRef(data);
 
-  useEffect(()=>{setActiveDay(dayKeys[0])},[routine]);
+  useEffect(()=>{saveAppState(routine,activeDay,curWeek)},[routine,activeDay,curWeek]);
+  useEffect(()=>{if(!dayKeys.includes(activeDay))setActiveDay(dayKeys[0])},[routine]);
 
   useEffect(()=>{
     if(!syncCode)return;
     const unsub=db&&db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
       if(isEditing.current){setSynced(true);return}
-      if(doc.exists){const r=doc.data();latestData.current=r;setData(r);
-        if(r.startDate){const s=new Date(r.startDate),n=new Date(),d=Math.floor((n-s)/(7*24*60*60*1000));setCurrentWeek(Math.max(1,d+1))}
-        setSynced(true)}else{
+      if(doc.exists){const r=doc.data();latestData.current=r;setData(r);setSynced(true)}else{
         const init={startDate:new Date().toISOString().split("T")[0],routines:{}};
         db&&db.collection("trackers").doc(syncCode).set(init).catch(()=>{});latestData.current=init;setData(init);setSynced(true)}
     },()=>setSynced(false));
@@ -342,29 +356,24 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
       }).catch(()=>{})},1500)},[syncCode]);
 
   const rData=data?.routines?.[routine]||{};
-  const getDayDate=(w,d)=>rData?.weeks?.[`w${w}`]?.[d]?._date||"";
-  const setDayDate=v=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
-    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
-    if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
-    nd.routines[routine].weeks[wk][activeDay]._date=v;save(nd)};
-  const getEntry=(w,d,exId)=>rData?.weeks?.[`w${w}`]?.[d]?.[exId]||{};
+  const getDayDate=(w,d)=>rData?.weeks?.[w]?.[d]?._date||"";
+  const setDayDate=v=>{const nd=JSON.parse(JSON.stringify(latestData.current));
+    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[curWeek])nd.routines[routine].weeks[curWeek]={};
+    if(!nd.routines[routine].weeks[curWeek][activeDay])nd.routines[routine].weeks[curWeek][activeDay]={};
+    nd.routines[routine].weeks[curWeek][activeDay]._date=v;save(nd)};
+  const getEntry=(w,d,exId)=>rData?.weeks?.[w]?.[d]?.[exId]||{};
   const getLastEntry=(exId)=>{
-    // Look backward through weeks for the most recent completed entry
-    for(let w=currentWeek;w>=1;w--){
-      // Check all days where this exercise might appear
-      for(const dk of dayKeys){
-        if(w===currentWeek&&dk===activeDay)continue; // skip current session
-        const entry=rData?.weeks?.[`w${w}`]?.[dk]?.[exId];
-        if(entry?.done)return entry;
-      }
-    }
-    return null;
-  };
-  const updateEntry=(exId,field,value,exDef)=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
-    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
-    if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
-    if(!nd.routines[routine].weeks[wk][activeDay][exId])nd.routines[routine].weeks[wk][activeDay][exId]={};
-    nd.routines[routine].weeks[wk][activeDay][exId][field]=value;
+    const weekKeys=Object.keys(rData?.weeks||{}).sort().reverse();
+    for(const wk of weekKeys){for(const dk of dayKeys){
+      if(wk===curWeek&&dk===activeDay)continue;
+      const entry=rData?.weeks?.[wk]?.[dk]?.[exId];
+      if(entry?.done)return entry}}
+    return null};
+  const updateEntry=(exId,field,value,exDef)=>{const nd=JSON.parse(JSON.stringify(latestData.current));
+    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};if(!nd.routines[routine].weeks[curWeek])nd.routines[routine].weeks[curWeek]={};
+    if(!nd.routines[routine].weeks[curWeek][activeDay])nd.routines[routine].weeks[curWeek][activeDay]={};
+    if(!nd.routines[routine].weeks[curWeek][activeDay][exId])nd.routines[routine].weeks[curWeek][activeDay][exId]={};
+    nd.routines[routine].weeks[curWeek][activeDay][exId][field]=value;
     if(exDef){if(!nd.routines[routine].exerciseLib)nd.routines[routine].exerciseLib={};
       nd.routines[routine].exerciseLib[exId]={name:exDef.name,target:exDef.target,unit:exDef.unit||"reps",hasWeight:!!exDef.hasWeight,note:exDef.note||"",day:activeDay}}
     save(nd)};
@@ -378,31 +387,32 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     const lib=rData?.exerciseLib||{};
     const restoredExs=restored.filter(id=>lib[id]&&!hardcoded.some(ex=>ex.id===id)).map(id=>({id,...lib[id],isRestored:true}));
     return[...hardcoded,...restoredExs]};
-  const isDayComplete=(w,d)=>{const dd=rData?.weeks?.[`w${w}`]?.[d];if(!dd)return false;return R.days[d].exercises.every(ex=>dd[ex.id]?.done)};
-  const isDayLocked=(w,d)=>!!rData?.weeks?.[`w${w}`]?.[d]?._locked;
-  const lockDay=()=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
-    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};
-    if(!nd.routines[routine].weeks[wk])nd.routines[routine].weeks[wk]={};
-    if(!nd.routines[routine].weeks[wk][activeDay])nd.routines[routine].weeks[wk][activeDay]={};
-    nd.routines[routine].weeks[wk][activeDay]._locked=true;save(nd)};
-  const unlockDay=()=>{const nd=JSON.parse(JSON.stringify(latestData.current));const wk=`w${currentWeek}`;
-    if(nd.routines?.[routine]?.weeks?.[wk]?.[activeDay]){nd.routines[routine].weeks[wk][activeDay]._locked=false;save(nd)}};
-  const startNewSession=()=>{setCurrentWeek(currentWeek+1)};
+  const isDayComplete=(w,d)=>{const dd=rData?.weeks?.[w]?.[d];if(!dd)return false;return R.days[d].exercises.every(ex=>dd[ex.id]?.done)};
+  const isDayLocked=(w,d)=>!!rData?.weeks?.[w]?._weekLocked;
   const getWC=w=>dayKeys.filter(d=>isDayComplete(w,d)).length;
-  const resetData=()=>{if(confirm("Erase ALL progress for this routine? Exercise library will be preserved.")){const nd=JSON.parse(JSON.stringify(latestData.current));if(!nd.routines)nd.routines={};const lib=nd.routines[routine]?.exerciseLib||{};nd.routines[routine]={weeks:{},exerciseLib:lib,restored:{}};save(nd);setCurrentWeek(1)}};
+  const lockWeek=()=>{const nd=JSON.parse(JSON.stringify(latestData.current));
+    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};
+    if(!nd.routines[routine].weeks[curWeek])nd.routines[routine].weeks[curWeek]={};
+    nd.routines[routine].weeks[curWeek]._weekLocked=true;save(nd);
+    setTimeout(()=>{setCurWeek(shiftWeek(curWeek,1))},500)};
+  const unlockWeek=()=>{const nd=JSON.parse(JSON.stringify(latestData.current));
+    if(nd.routines?.[routine]?.weeks?.[curWeek]){nd.routines[routine].weeks[curWeek]._weekLocked=false;save(nd)}};
+  const startNewSession=()=>{setCurWeek(shiftWeek(curWeek,1))};
+  const resetData=()=>{if(confirm("Erase ALL progress for this routine?")){const nd=JSON.parse(JSON.stringify(latestData.current));if(!nd.routines)nd.routines={};const lib=nd.routines[routine]?.exerciseLib||{};nd.routines[routine]={weeks:{},exerciseLib:lib,restored:{}};save(nd);setCurWeek(curWeekKey())}};
   const disconnect=()=>{if(confirm("Disconnect this device?")){localStorage.removeItem(SYNC_CODE_KEY);localStorage.removeItem(LOCAL_DATA_KEY);setSyncCode(null)}};
 
-  const plan=R.days[activeDay];const activeExercises=getActiveExercises(activeDay);const cw=getWC(currentWeek);const isMSTF=routine==="mstf";
-  const locked=isDayLocked(currentWeek,activeDay);const dayData=rData?.weeks?.[`w${currentWeek}`]?.[activeDay]||{};const hasData=activeExercises.some(ex=>dayData[ex.id]?.done||dayData[ex.id]?.reps||dayData[ex.id]?.reps_l);
-  const pastWeeks=[];for(let w=currentWeek-1;w>=1;w--){if(rData?.weeks?.[`w${w}`])pastWeeks.push(w)}
+  const plan=R.days[activeDay];const activeExercises=getActiveExercises(activeDay);const cw=getWC(curWeek);const isMSTF=routine==="mstf";
+  const locked=isDayLocked(curWeek,activeDay);const dayData=rData?.weeks?.[curWeek]?.[activeDay]||{};const hasData=activeExercises.some(ex=>dayData[ex.id]?.done||dayData[ex.id]?.reps||dayData[ex.id]?.reps_l);
+  const pastWeeks=Object.keys(rData?.weeks||{}).filter(wk=>wk<curWeek).sort().reverse();
 
   return(<div>
     <div style={{background:R.color,color:"#fff",padding:"1.25rem 1rem 1rem",textAlign:"center"}}>
       <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:".5rem"}}>
         <span style={{fontSize:"1.35rem",fontWeight:700}}>{R.short} Tracker</span>
         <span className={`sync-badge ${synced?"online":"offline"}`}><span style={{width:6,height:6,borderRadius:"50%",background:synced?"#2e7d32":"#e65100",animation:synced?"none":"pulse 1.5s infinite"}}></span>{synced?"synced":"offline"}</span></div>
-      <div style={{fontSize:".82rem",opacity:.8,marginTop:".2rem"}}>Week {currentWeek} • {cw}/{dayKeys.length} sessions
-        <span onClick={()=>setShowSync(!showSync)} style={{marginLeft:8,cursor:"pointer",textDecoration:"underline",opacity:.7}}>sync code</span></div></div>
+      <div style={{fontSize:".82rem",opacity:.8,marginTop:".2rem"}}>{formatWeekRange(curWeek)} • {cw}/{dayKeys.length} sessions
+        <span onClick={()=>setShowSync(!showSync)} style={{marginLeft:8,cursor:"pointer",textDecoration:"underline",opacity:.7}}>sync code</span></div>
+      <div style={{fontSize:".72rem",opacity:.6,marginTop:".15rem"}}>{getTodayStr()}</div></div>
 
     {showSync&&<div style={{background:"#fff",padding:"1rem",borderBottom:"1px solid #e0dbd5",textAlign:"center"}}>
       <div style={{fontSize:".78rem",color:"#999",marginBottom:".3rem"}}>Your sync code:</div>
@@ -410,16 +420,16 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
       <button onClick={disconnect} style={{marginTop:".6rem",border:"1px solid #ddd",background:"none",color:"#999",padding:".3rem 1rem",borderRadius:"6px",fontSize:".75rem",cursor:"pointer"}}>Disconnect device</button></div>}
 
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"1rem",padding:".75rem 1rem",background:"#fff",borderBottom:"1px solid #e0dbd5"}}>
-      <button onClick={()=>setCurrentWeek(Math.max(1,currentWeek-1))} disabled={currentWeek<=1} style={{border:"none",background:"none",fontSize:"1.2rem",cursor:currentWeek>1?"pointer":"default",opacity:currentWeek>1?1:.3,padding:".25rem .5rem"}}>◀</button>
-      <span style={{fontWeight:600,fontSize:".95rem"}}>Week {currentWeek}</span>
-      <button onClick={()=>setCurrentWeek(currentWeek+1)} style={{border:"none",background:"none",fontSize:"1.2rem",cursor:"pointer",padding:".25rem .5rem"}}>▶</button></div>
+      <button onClick={()=>setCurWeek(shiftWeek(curWeek,-1))} style={{border:"none",background:"none",fontSize:"1.2rem",cursor:"pointer",padding:".25rem .5rem"}}>◀</button>
+      <span style={{fontWeight:600,fontSize:".85rem",textAlign:"center"}}>{formatWeekRange(curWeek)}</span>
+      <button onClick={()=>setCurWeek(shiftWeek(curWeek,1))} style={{border:"none",background:"none",fontSize:"1.2rem",cursor:"pointer",padding:".25rem .5rem"}}>▶</button></div>
 
     <div style={{display:"flex",gap:".5rem",padding:".75rem 1rem"}}>
       {["log","history"].map(v=><button key={v} onClick={()=>setView(v)} style={{flex:1,padding:".5rem",border:"none",borderRadius:"8px",fontWeight:600,fontSize:".85rem",cursor:"pointer",background:view===v?R.color:"#fff",color:view===v?"#fff":R.color,boxShadow:view===v?"none":"0 1px 4px rgba(0,0,0,.08)"}}>{v==="log"?"📝 Log":"📊 History"}</button>)}</div>
 
     {view==="log"?<>
       <div style={{display:"flex",gap:".4rem",padding:"0 1rem .75rem"}}>
-        {dayKeys.map(key=>{const day=R.days[key];const comp=isDayComplete(currentWeek,key);const lk=isDayLocked(currentWeek,key);const dd=getDayDate(currentWeek,key);
+        {dayKeys.map(key=>{const day=R.days[key];const comp=isDayComplete(curWeek,key);const lk=isDayLocked(curWeek,key);const dd=getDayDate(curWeek,key);
           return(<button key={key} onClick={()=>setActiveDay(key)} style={{flex:1,padding:".6rem .25rem",border:activeDay===key?`2px solid ${day.color}`:"2px solid transparent",borderRadius:"10px",cursor:"pointer",fontSize:".75rem",fontWeight:600,textAlign:"center",background:activeDay===key?day.bg:"#fff",color:day.color,boxShadow:"0 1px 4px rgba(0,0,0,.06)",position:"relative"}}>
             {lk?<span style={{position:"absolute",top:3,right:6,fontSize:".7rem"}}>🔒</span>:comp&&<span style={{position:"absolute",top:3,right:6,fontSize:".7rem"}}>✅</span>}
             <div>{day.label}</div><div style={{fontSize:".65rem",fontWeight:400,opacity:.75,marginTop:1}}>{day.title}</div>
@@ -429,16 +439,16 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
 
       <div style={{padding:"0 1rem .75rem"}}><div style={{background:"#fff",borderRadius:"10px",padding:".65rem 1rem",boxShadow:"0 1px 4px rgba(0,0,0,.06)",display:"flex",alignItems:"center",gap:".6rem"}}>
         <span style={{fontSize:".82rem",fontWeight:600,color:"#666",whiteSpace:"nowrap"}}>📅 Date:</span>
-        <input type="date" value={getDayDate(currentWeek,activeDay)||new Date().toISOString().split("T")[0]} onChange={e=>setDayDate(e.target.value)} disabled={locked} style={{flex:1,padding:".4rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".9rem",fontFamily:"inherit",background:locked?"#f0f0f0":"#fafaf8",outline:"none"}}/>
+        <input type="date" value={getDayDate(curWeek,activeDay)||new Date().toISOString().split("T")[0]} onChange={e=>setDayDate(e.target.value)} disabled={locked} style={{flex:1,padding:".4rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".9rem",fontFamily:"inherit",background:locked?"#f0f0f0":"#fafaf8",outline:"none"}}/>
         <span style={{fontSize:".72rem",fontWeight:600,padding:".2rem .5rem",borderRadius:"8px",background:locked?"#e8f5e9":"#f5f0eb",color:locked?"#2e7d32":"#999"}}>{locked?"🔒 Locked":"🔓 Open"}</span>
       </div></div>
 
       {locked&&<div style={{margin:"0 1rem .75rem",padding:".85rem 1rem",background:"#e8f5e9",borderRadius:"10px",border:"1px solid #a5d6a7",textAlign:"center"}}>
-        <div style={{fontSize:".85rem",fontWeight:700,color:"#2e7d32",marginBottom:".4rem"}}>🔒 Workout Locked</div>
+        <div style={{fontSize:".85rem",fontWeight:700,color:"#2e7d32",marginBottom:".4rem"}}>🔒 Week Locked</div>
         <div style={{fontSize:".78rem",color:"#555",marginBottom:".6rem",lineHeight:1.4}}>This session is complete and saved. Start a new session to log fresh data.</div>
         <div style={{display:"flex",gap:".5rem",justifyContent:"center"}}>
           <button onClick={startNewSession} style={{padding:".5rem 1rem",border:"none",borderRadius:"8px",background:R.color,color:"#fff",fontWeight:600,fontSize:".82rem",cursor:"pointer"}}>Start New Session →</button>
-          <button onClick={unlockDay} style={{padding:".5rem .8rem",border:"1px solid #ccc",borderRadius:"8px",background:"#fff",color:"#999",fontWeight:600,fontSize:".78rem",cursor:"pointer"}}>Unlock</button>
+          <button onClick={unlockWeek} style={{padding:".5rem .8rem",border:"1px solid #ccc",borderRadius:"8px",background:"#fff",color:"#999",fontWeight:600,fontSize:".78rem",cursor:"pointer"}}>Unlock Week</button>
         </div>
       </div>}
 
@@ -451,7 +461,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
       <PhaseBlock title="Warm-Up" items={plan.warmup} color={R.color} icon="🔥"/>
 
       <div style={{padding:"0 1rem",opacity:locked?0.7:1,pointerEvents:locked?"none":"auto"}}>
-        {activeExercises.map(ex=>{const entry=getEntry(currentWeek,activeDay,ex.id);const last=getLastEntry(ex.id);const ps=ex.perSide;
+        {activeExercises.map(ex=>{const entry=getEntry(curWeek,activeDay,ex.id);const last=getLastEntry(ex.id);const ps=ex.perSide;
           const lastStr=last?(ps?
             (last.reps_l||last.reps_r?`L: ${last.reps_l||"—"}${isMSTF?"s":""}${last.weight_l?` @ ${last.weight_l}lb`:""} | R: ${last.reps_r||"—"}${isMSTF?"s":""}${last.weight_r?` @ ${last.weight_r}lb`:""}`:""):
             (`${last.reps||"—"}${isMSTF?"s":""}${last.weight?` @ ${last.weight}lb`:""}`)):null;
@@ -510,16 +520,16 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
       <PhaseBlock title="Cool-Down" items={plan.cooldown} color={R.color} icon="❄️"/>
 
       {!locked&&<div style={{padding:"0 1rem",marginTop:".5rem",marginBottom:"1rem"}}>
-        <button onClick={hasData?lockDay:undefined} disabled={!hasData} style={{width:"100%",padding:".85rem",border:"none",borderRadius:"12px",background:hasData?"#2e7d32":"#ccc",color:"#fff",fontSize:".95rem",fontWeight:700,cursor:hasData?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:".5rem",opacity:hasData?1:0.5}}>
-          🔒 {hasData?"Lock Workout — Session Complete":"Lock Workout (enter data first)"}
+        <button onClick={hasData?lockWeek:undefined} disabled={!hasData} style={{width:"100%",padding:".85rem",border:"none",borderRadius:"12px",background:hasData?"#2e7d32":"#ccc",color:"#fff",fontSize:".95rem",fontWeight:700,cursor:hasData?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:".5rem",opacity:hasData?1:0.5}}>
+          🔒 {hasData?"Lock Week — All Sessions Complete":"Lock Week (log workouts first)"}
         </button>
         {hasData&&<div style={{textAlign:"center",fontSize:".72rem",color:"#999",marginTop:".4rem",lineHeight:1.4}}>
-          Locking saves this session and clears the fields for your next workout.</div>}
+          Locking saves this week and auto-advances to the next week with blank fields.</div>}
       </div>}
     </>:
     <div style={{padding:"0 1rem"}}>
-      <WS week={currentWeek} rData={rData} label="This Week" R={R} routine={routine}/>
-      {pastWeeks.length>0?pastWeeks.map(w=><WS key={w} week={w} rData={rData} label={`Week ${w}`} R={R} routine={routine}/>):
+      <WS week={curWeek} rData={rData} label="This Week" R={R} routine={routine}/>
+      {pastWeeks.length>0?pastWeeks.map(w=><WS key={w} week={w} rData={rData} label={formatWeekRange(w)} R={R} routine={routine}/>):
         <div style={{textAlign:"center",color:"#999",padding:"2rem 1rem",fontSize:".9rem"}}>Past weeks appear here as you progress.</div>}
       <button onClick={resetData} style={{display:"block",margin:"2rem auto 0",background:"none",border:"1px solid #ddd",color:"#c0392b",padding:".6rem 1.5rem",borderRadius:"8px",fontSize:".82rem",cursor:"pointer"}}>Reset {R.short} Progress</button>
     </div>}
@@ -528,7 +538,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
 
 // ═══ WEEK SUMMARY ═══
 function WS({week,rData,label,R,routine}){
-  const wk=`w${week}`;const wd=rData?.weeks?.[wk];const dayKeys=Object.keys(R.days);const isMSTF=routine==="mstf";
+  const wd=rData?.weeks?.[week];const dayKeys=Object.keys(R.days);const isMSTF=routine==="mstf";
   if(!wd&&label!=="This Week")return null;
   return(<div style={{background:"#fff",borderRadius:"12px",padding:"1rem",marginBottom:".75rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)"}}>
     <div style={{fontWeight:700,fontSize:"1rem",marginBottom:".6rem",color:R.color}}>{label}</div>
@@ -571,7 +581,7 @@ function MiniChart({points,targetMin,targetMax,color,label,unit}){
     {points.map((p,i)=><g key={i}>
       <circle cx={x(i)} cy={y(p.value)} r="4" fill="#fff" stroke={color} strokeWidth="2"/>
       <text x={x(i)} y={y(p.value)-8} fontSize="8" fill={color} textAnchor="middle" fontWeight="600">{p.value}</text>
-      <text x={x(i)} y={H-4} fontSize="7" fill="#999" textAnchor="middle">W{p.week}</text>
+      <text x={x(i)} y={H-4} fontSize="7" fill="#999" textAnchor="middle">{p.week}</text>
     </g>)}
   </svg>);
 }
@@ -605,16 +615,16 @@ function ProgressView({syncCode,routine}){
     const rd=data?.routines?.[routine];if(!rd?.weeks)return[];
     const ids=getLinkedIds(exId);const points=[];
     const weekKeys=Object.keys(rd.weeks).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
-    weekKeys.forEach(wk=>{const weekNum=parseInt(wk.slice(1));
+    weekKeys.forEach(wk=>{const weekLabel=wk.slice(1).slice(5).replace("-","/");
       for(const dk of Object.keys(R.days)){
         for(const id of ids){
           const entry=rd.weeks[wk]?.[dk]?.[id];
           if(entry?.done){
-            if(side){const v=entry[`reps_${side}`];if(v)points.push({week:weekNum,value:Number(v),day:dk})}
+            if(side){const v=entry[`reps_${side}`];if(v)points.push({week:weekLabel,value:Number(v),day:dk})}
             else if(entry.reps_l||entry.reps_r){
               const l=Number(entry.reps_l||0),r=Number(entry.reps_r||0),cnt=(entry.reps_l?1:0)+(entry.reps_r?1:0);
-              if(cnt)points.push({week:weekNum,value:Math.round((l+r)/cnt),day:dk})}
-            else if(entry.reps){points.push({week:weekNum,value:Number(entry.reps),day:dk})}
+              if(cnt)points.push({week:weekLabel,value:Math.round((l+r)/cnt),day:dk})}
+            else if(entry.reps){points.push({week:weekLabel,value:Number(entry.reps),day:dk})}
     }}}});
     return points;
   };
@@ -623,16 +633,16 @@ function ProgressView({syncCode,routine}){
     const rd=data?.routines?.[routine];if(!rd?.weeks)return[];
     const ids=getLinkedIds(exId);const points=[];
     const weekKeys=Object.keys(rd.weeks).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
-    weekKeys.forEach(wk=>{const weekNum=parseInt(wk.slice(1));
+    weekKeys.forEach(wk=>{const weekLabel=wk.slice(1).slice(5).replace("-","/");
       for(const dk of Object.keys(R.days)){
         for(const id of ids){
           const entry=rd.weeks[wk]?.[dk]?.[id];
           if(entry?.done){
-            if(side){const v=entry[`weight_${side}`];if(v)points.push({week:weekNum,value:Number(v),day:dk})}
+            if(side){const v=entry[`weight_${side}`];if(v)points.push({week:weekLabel,value:Number(v),day:dk})}
             else if(entry.weight_l||entry.weight_r){
               const l=Number(entry.weight_l||0),r=Number(entry.weight_r||0),cnt=(entry.weight_l?1:0)+(entry.weight_r?1:0);
-              if(cnt)points.push({week:weekNum,value:Math.round((l+r)/cnt),day:dk})}
-            else if(entry.weight){points.push({week:weekNum,value:Number(entry.weight),day:dk})}
+              if(cnt)points.push({week:weekLabel,value:Math.round((l+r)/cnt),day:dk})}
+            else if(entry.weight){points.push({week:weekLabel,value:Number(entry.weight),day:dk})}
     }}}});
     return points;
   };
