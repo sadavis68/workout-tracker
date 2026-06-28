@@ -336,7 +336,26 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     if(!syncCode)return;
     const unsub=db&&db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
       if(isEditing.current){setSynced(true);return}
-      if(doc.exists){const r=doc.data();latestData.current=r;setData(r);setSynced(true)}else{
+      if(doc.exists){let r=doc.data();
+        // Migrate old numeric week keys (w1, w2) to date-based keys (w2026-06-23)
+        let migrated=false;
+        if(r.routines){Object.keys(r.routines).forEach(rKey=>{
+          const rt=r.routines[rKey];if(!rt?.weeks)return;
+          const oldKeys=Object.keys(rt.weeks).filter(k=>/^w\d+$/.test(k));
+          if(oldKeys.length>0&&r.startDate){
+            const startMon=getMonday(new Date(r.startDate));
+            oldKeys.forEach(ok=>{
+              const num=parseInt(ok.slice(1));
+              const d=new Date(startMon);d.setDate(d.getDate()+(num-1)*7);
+              const newKey=weekKey(d);
+              if(!rt.weeks[newKey]){rt.weeks[newKey]=rt.weeks[ok]}
+              delete rt.weeks[ok];
+            });
+            migrated=true;
+          }
+        })}
+        if(migrated){db&&db.collection("trackers").doc(syncCode).set(r).catch(()=>{})}
+        latestData.current=r;setData(r);setSynced(true)}else{
         const init={startDate:new Date().toISOString().split("T")[0],routines:{}};
         db&&db.collection("trackers").doc(syncCode).set(init).catch(()=>{});latestData.current=init;setData(init);setSynced(true)}
     },()=>setSynced(false));
