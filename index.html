@@ -44,10 +44,11 @@ function generateSyncCode(){return`${WORDS[Math.floor(Math.random()*WORDS.length
 const SYNC_CODE_KEY="workout-sync-code",LOCAL_DATA_KEY="workout-progress-v4",APP_STATE_KEY="workout-app-state";
 const IS={width:"100%",padding:".45rem .5rem",border:"1.5px solid #e0dbd5",borderRadius:"8px",fontSize:".95rem",fontFamily:"inherit",outline:"none",marginTop:".15rem",background:"#fafaf8"};
 
-// ═══ CALENDAR WEEK HELPERS ═══
-function getMonday(d){const dt=new Date(d);const day=dt.getDay();const diff=dt.getDate()-day+(day===0?-6:1);dt.setDate(diff);dt.setHours(0,0,0,0);return dt}
+// ═══ CALENDAR WEEK HELPERS (timezone-safe) ═══
+function parseDate(d){if(typeof d==="string"){const p=d.replace(/^w/,"").split("-");return new Date(p[0],p[1]-1,p[2],12,0,0)}return new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0)}
+function getMonday(d){const dt=parseDate(d);const day=dt.getDay();const diff=dt.getDate()-day+(day===0?-6:1);dt.setDate(diff);return dt}
 function weekKey(date){const mon=getMonday(date);return`w${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,"0")}-${String(mon.getDate()).padStart(2,"0")}`}
-function weekKeyToDate(wk){if(!wk||!wk.startsWith("w"))return new Date();const parts=wk.slice(1).split("-");return new Date(parts[0],parts[1]-1,parts[2])}
+function weekKeyToDate(wk){if(!wk||!wk.startsWith("w"))return new Date();const p=wk.slice(1).split("-");return new Date(p[0],p[1]-1,p[2],12,0,0)}
 function formatWeekRange(wk){const mon=weekKeyToDate(wk);const sun=new Date(mon);sun.setDate(sun.getDate()+6);
   const fmt=(d)=>d.toLocaleDateString(undefined,{month:"short",day:"numeric"});return`${fmt(mon)} – ${fmt(sun)}`}
 function shiftWeek(wk,delta){const d=weekKeyToDate(wk);d.setDate(d.getDate()+delta*7);return weekKey(d)}
@@ -337,13 +338,18 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     const unsub=db&&db.collection("trackers").doc(syncCode).onSnapshot(doc=>{
       if(isEditing.current){setSynced(true);return}
       if(doc.exists){let r=doc.data();
+        // Check if localStorage has newer data that didn't sync
+        try{const local=JSON.parse(localStorage.getItem(LOCAL_DATA_KEY));
+          if(local?.routines){const localWeeks=Object.values(local.routines).reduce((n,rt)=>n+Object.keys(rt.weeks||{}).length,0);
+            const remoteWeeks=Object.values(r.routines||{}).reduce((n,rt)=>n+Object.keys(rt.weeks||{}).length,0);
+            if(localWeeks>remoteWeeks){r=local;db&&db.collection("trackers").doc(syncCode).set(r).catch(()=>{})}}}catch(e){}
         // Migrate old numeric week keys (w1, w2) to date-based keys (w2026-06-23)
         let migrated=false;
         if(r.routines){Object.keys(r.routines).forEach(rKey=>{
           const rt=r.routines[rKey];if(!rt?.weeks)return;
           const oldKeys=Object.keys(rt.weeks).filter(k=>/^w\d+$/.test(k));
           if(oldKeys.length>0&&r.startDate){
-            const startMon=getMonday(new Date(r.startDate));
+            const startMon=getMonday(r.startDate);
             oldKeys.forEach(ok=>{
               const num=parseInt(ok.slice(1));
               const d=new Date(startMon);d.setDate(d.getDate()+(num-1)*7);
@@ -372,7 +378,16 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     saveTimeout.current=setTimeout(()=>{
       db&&db.collection("trackers").doc(syncCode).set(nd).then(()=>{
         setTimeout(()=>{isEditing.current=false},1000);
-      }).catch(()=>{})},1500)},[syncCode]);
+      }).catch(()=>{})},500)},[syncCode]);
+
+  // Save immediately when page is about to close
+  useEffect(()=>{
+    const flush=()=>{if(saveTimeout.current){clearTimeout(saveTimeout.current);
+      db&&db.collection("trackers").doc(syncCode).set(latestData.current).catch(()=>{})}};
+    window.addEventListener("beforeunload",flush);
+    window.addEventListener("pagehide",flush);
+    return()=>{window.removeEventListener("beforeunload",flush);window.removeEventListener("pagehide",flush)};
+  },[syncCode]);
 
   const rData=data?.routines?.[routine]||{};
   const getDayDate=(w,d)=>rData?.weeks?.[w]?.[d]?._date||"";
