@@ -121,7 +121,7 @@ const ROUTINES={
         {id:"m_row",name:"Slow Row",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: anchor at chest height, pull to ribs over 10 sec, return over 10 sec. DB: hinge 45° at hips, pull dumbbell to hip over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
         {id:"m_press",name:"Slow Overhead Press",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, press overhead over 10 sec, lower over 10 sec. DB: press dumbbells from shoulders overhead over 10 sec, lower over 10 sec. Don't lock out. Core braced. To failure."},
         {id:"m_squat",name:"Slow Squat",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to lower, pause at bottom, 10 sec to rise. Don't lock knees at top. Keep tension constant. Weight in heels. DB option: hold dumbbell at chest (goblet style) for added resistance. To failure."},
-        {id:"m_pallof",perSide:true,name:"Slow Pallof Press",target:"Target: 90–120s TUL ea.",unit:"tul",note:"Anchor band at chest height to your side. Hold handle at chest with both hands. Press arms straight out over 10 sec, resisting the band's pull to rotate you. Return to chest over 10 sec. Your core fights rotation the entire time — this is anti-rotation training that builds real-world functional stability. Face one direction to failure, then switch sides."},
+        {id:"m_pallof",perSide:true,hasWeight:true,name:"Slow Pallof Press",target:"Target: 90–120s TUL ea.",unit:"tul",note:"Anchor band at chest height to your side. Hold handle at chest with both hands. Press arms straight out over 10 sec, resisting the band's pull to rotate you. Return to chest over 10 sec. Your core fights rotation the entire time — this is anti-rotation training that builds real-world functional stability. Face one direction to failure, then switch sides. Log band resistance or DB weight used."},
         {id:"m_curl",name:"Slow Bicep Curl",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, curl over 10 sec, lower over 10 sec. DB: curl dumbbells over 10 sec, lower over 10 sec. Elbows pinned to ribs. No swinging. To failure."},
         {id:"m_fhold",name:"Slow Farmer's Hold",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Stand tall holding dumbbells at your sides. Squeeze handles as hard as possible. Shoulders back and down, core braced. Hold with full attention until grip fails. Builds grip strength — one of the strongest predictors of longevity. Start 15–25 lb each hand."}],
       cooldown:[{name:"Standing Forward Fold",sets:"45s",note:"Bend at hips, let arms hang. Breathe into hamstrings."},{name:"Chest Opener",sets:"30s",note:"Clasp hands behind back, lift gently. Open chest."},{name:"Seated Body Scan",sets:"2 min",note:"Sit quietly. Notice where your muscles are working. Breathe into each area."}]},
@@ -422,8 +422,16 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
     const restoredExs=restored.filter(id=>lib[id]&&!hardcoded.some(ex=>ex.id===id)).map(id=>({id,...lib[id],isRestored:true}));
     return[...hardcoded,...restoredExs]};
   const isDayComplete=(w,d)=>{const dd=rData?.weeks?.[w]?.[d];if(!dd)return false;return R.days[d].exercises.every(ex=>dd[ex.id]?.done)};
-  const isDayLocked=(w,d)=>!!rData?.weeks?.[w]?._weekLocked;
+  const isDayLocked=(w,d)=>!!rData?.weeks?.[w]?._weekLocked||!!rData?.weeks?.[w]?.[d]?._dayLocked;
+  const isWeekLocked=(w)=>!!rData?.weeks?.[w]?._weekLocked;
   const getWC=w=>dayKeys.filter(d=>isDayComplete(w,d)).length;
+  const lockDay=()=>{const nd=JSON.parse(JSON.stringify(latestData.current));
+    if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};
+    if(!nd.routines[routine].weeks[curWeek])nd.routines[routine].weeks[curWeek]={};
+    if(!nd.routines[routine].weeks[curWeek][activeDay])nd.routines[routine].weeks[curWeek][activeDay]={};
+    nd.routines[routine].weeks[curWeek][activeDay]._dayLocked=true;save(nd)};
+  const unlockDay=()=>{const nd=JSON.parse(JSON.stringify(latestData.current));
+    if(nd.routines?.[routine]?.weeks?.[curWeek]?.[activeDay]){nd.routines[routine].weeks[curWeek][activeDay]._dayLocked=false;save(nd)}};
   const lockWeek=()=>{const nd=JSON.parse(JSON.stringify(latestData.current));
     if(!nd.routines)nd.routines={};if(!nd.routines[routine])nd.routines[routine]={weeks:{}};
     if(!nd.routines[routine].weeks[curWeek])nd.routines[routine].weeks[curWeek]={};
@@ -436,7 +444,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
   const disconnect=()=>{if(confirm("Disconnect this device?")){localStorage.removeItem(SYNC_CODE_KEY);localStorage.removeItem(LOCAL_DATA_KEY);setSyncCode(null)}};
 
   const plan=R.days[activeDay];const activeExercises=getActiveExercises(activeDay);const cw=getWC(curWeek);const isMSTF=routine==="mstf";
-  const locked=isDayLocked(curWeek,activeDay);const dayData=rData?.weeks?.[curWeek]?.[activeDay]||{};const hasData=activeExercises.some(ex=>dayData[ex.id]?.done||dayData[ex.id]?.reps||dayData[ex.id]?.reps_l);
+  const weekLocked=isWeekLocked(curWeek);const dayOnlyLocked=!!rData?.weeks?.[curWeek]?.[activeDay]?._dayLocked&&!weekLocked;const locked=weekLocked||dayOnlyLocked;const dayData=rData?.weeks?.[curWeek]?.[activeDay]||{};const hasData=activeExercises.some(ex=>dayData[ex.id]?.done||dayData[ex.id]?.reps||dayData[ex.id]?.reps_l);
   const pastWeeks=Object.keys(rData?.weeks||{}).filter(wk=>wk<curWeek).sort().reverse();
 
   return(<div>
@@ -477,12 +485,12 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
         <span style={{fontSize:".72rem",fontWeight:600,padding:".2rem .5rem",borderRadius:"8px",background:locked?"#e8f5e9":"#f5f0eb",color:locked?"#2e7d32":"#999"}}>{locked?"🔒 Locked":"🔓 Open"}</span>
       </div></div>
 
-      {locked&&<div style={{margin:"0 1rem .75rem",padding:".85rem 1rem",background:"#e8f5e9",borderRadius:"10px",border:"1px solid #a5d6a7",textAlign:"center"}}>
-        <div style={{fontSize:".85rem",fontWeight:700,color:"#2e7d32",marginBottom:".4rem"}}>🔒 Week Locked</div>
-        <div style={{fontSize:".78rem",color:"#555",marginBottom:".6rem",lineHeight:1.4}}>This session is complete and saved. Start a new session to log fresh data.</div>
-        <div style={{display:"flex",gap:".5rem",justifyContent:"center"}}>
-          <button onClick={startNewSession} style={{padding:".5rem 1rem",border:"none",borderRadius:"8px",background:R.color,color:"#fff",fontWeight:600,fontSize:".82rem",cursor:"pointer"}}>Start New Session →</button>
-          <button onClick={unlockWeek} style={{padding:".5rem .8rem",border:"1px solid #ccc",borderRadius:"8px",background:"#fff",color:"#999",fontWeight:600,fontSize:".78rem",cursor:"pointer"}}>Unlock Week</button>
+      {locked&&<div style={{margin:"0 1rem .75rem",padding:".85rem 1rem",background:weekLocked?"#e8f5e9":"#fff3e0",borderRadius:"10px",border:`1px solid ${weekLocked?"#a5d6a7":"#ffcc80"}`,textAlign:"center"}}>
+        <div style={{fontSize:".85rem",fontWeight:700,color:weekLocked?"#2e7d32":"#e65100",marginBottom:".4rem"}}>{weekLocked?"🔒 Week Locked":"🔒 Workout Locked"}</div>
+        <div style={{fontSize:".78rem",color:"#555",marginBottom:".6rem",lineHeight:1.4}}>{weekLocked?"All sessions for this week are finalized.":"This workout is locked. Other days in this week are still open."}</div>
+        <div style={{display:"flex",gap:".5rem",justifyContent:"center",flexWrap:"wrap"}}>
+          {weekLocked&&<button onClick={startNewSession} style={{padding:".5rem 1rem",border:"none",borderRadius:"8px",background:R.color,color:"#fff",fontWeight:600,fontSize:".82rem",cursor:"pointer"}}>Next Week →</button>}
+          <button onClick={weekLocked?unlockWeek:unlockDay} style={{padding:".5rem .8rem",border:"1px solid #ccc",borderRadius:"8px",background:"#fff",color:"#999",fontWeight:600,fontSize:".78rem",cursor:"pointer"}}>Unlock {weekLocked?"Week":"Workout"}</button>
         </div>
       </div>}
 
@@ -508,6 +516,7 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
                 </div>
                 <div style={{fontSize:".78rem",color:"#888",marginTop:1}}>{ex.target}</div>
                 {lastStr&&<div style={{fontSize:".72rem",color:"#2d5a3d",marginTop:2,fontStyle:"italic"}}>Last: {lastStr}</div>}
+                {last?.notes&&<div style={{fontSize:".68rem",color:"#999",marginTop:1,fontStyle:"italic"}}>📝 {last.notes}</div>}
               </div>
               <div style={{display:"flex",gap:".3rem",alignItems:"center"}}>
                 {ex.isRestored&&<button onClick={()=>archiveExercise(ex.id)} title="Archive" style={{border:"1px solid #ddd",background:"#fff",borderRadius:"6px",width:28,height:28,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:".7rem",color:"#999"}}>✕</button>}
@@ -554,11 +563,14 @@ function Tracker({syncCode,setSyncCode,routine,setRoutine}){
       <PhaseBlock title="Cool-Down" items={plan.cooldown} color={R.color} icon="❄️"/>
 
       {!locked&&<div style={{padding:"0 1rem",marginTop:".5rem",marginBottom:"1rem"}}>
-        <button onClick={hasData?lockWeek:undefined} disabled={!hasData} style={{width:"100%",padding:".85rem",border:"none",borderRadius:"12px",background:hasData?"#2e7d32":"#ccc",color:"#fff",fontSize:".95rem",fontWeight:700,cursor:hasData?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:".5rem",opacity:hasData?1:0.5}}>
-          🔒 {hasData?"Lock Week — All Sessions Complete":"Lock Week (log workouts first)"}
+        <button onClick={hasData?lockDay:undefined} disabled={!hasData} style={{width:"100%",padding:".75rem",border:"none",borderRadius:"10px",background:hasData?"#e65100":"#ccc",color:"#fff",fontSize:".9rem",fontWeight:700,cursor:hasData?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:".4rem",opacity:hasData?1:0.5,marginBottom:".5rem"}}>
+          🔒 {hasData?"Lock Workout":"Lock Workout (enter data first)"}
+        </button>
+        <button onClick={hasData?lockWeek:undefined} disabled={!hasData} style={{width:"100%",padding:".75rem",border:"none",borderRadius:"10px",background:hasData?"#2e7d32":"#ccc",color:"#fff",fontSize:".9rem",fontWeight:700,cursor:hasData?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:".4rem",opacity:hasData?1:0.5}}>
+          🔒 {hasData?"Lock Entire Week":"Lock Week (enter data first)"}
         </button>
         {hasData&&<div style={{textAlign:"center",fontSize:".72rem",color:"#999",marginTop:".4rem",lineHeight:1.4}}>
-          Locking saves this week and auto-advances to the next week with blank fields.</div>}
+          Lock Workout saves this session. Lock Week finalizes all sessions and advances to the next week.</div>}
       </div>}
     </>:
     <div style={{padding:"0 1rem"}}>
