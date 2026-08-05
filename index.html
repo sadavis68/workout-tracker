@@ -118,7 +118,7 @@ const ROUTINES={
       warmup:[{name:"Joint Circles",sets:"2 min",note:"Slow circles: neck, shoulders, wrists, hips, ankles. Wake up each joint mindfully."},{name:"Body Scan",sets:"1 min",note:"Stand still. Close eyes. Breathe. Feel your feet on the ground. Scan from feet to head."}],
       exercises:[
         {id:"m_pushup",chartId:"slow_pushup",name:"Slow Push-Up",target:"Target: 90–120s TUL",unit:"tul",note:"10 sec down, pause at bottom, 10 sec up. No locking elbows. Breathe out on push. Continue until you cannot complete another rep. Incline for easier."},
-        {id:"m_row",name:"Slow Row",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: anchor at chest height, pull to ribs over 10 sec, return over 10 sec. DB: hinge 45° at hips, pull dumbbell to hip over 10 sec, lower over 10 sec. Squeeze shoulder blades. To failure."},
+        {id:"m_row",name:"Slow Bilateral Row",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: anchor at chest height, grip both handles. Pull both hands to ribs simultaneously over 10 sec, squeeze shoulder blades together, return over 10 sec. DB: hinge 45° at hips with a dumbbell in each hand, row both up together over 10 sec, lower over 10 sec. Both arms move together — no alternating. To failure."},
         {id:"m_press",name:"Slow Overhead Press",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"Band: stand on band, press overhead over 10 sec, lower over 10 sec. DB: press dumbbells from shoulders overhead over 10 sec, lower over 10 sec. Don't lock out. Core braced. To failure."},
         {id:"m_squat",name:"Slow Squat",target:"Target: 90–120s TUL",unit:"tul",hasWeight:true,note:"10 sec to lower, pause at bottom, 10 sec to rise. Don't lock knees at top. Keep tension constant. Weight in heels. DB option: hold dumbbell at chest (goblet style) for added resistance. To failure."},
         {id:"m_pallof",perSide:true,hasWeight:true,name:"Slow Pallof Press",target:"Target: 90–120s TUL ea.",unit:"tul",note:"Anchor band at chest height to your side. Hold handle at chest with both hands. Press arms straight out over 10 sec, resisting the band's pull to rotate you. Return to chest over 10 sec. Your core fights rotation the entire time — this is anti-rotation training that builds real-world functional stability. Face one direction to failure, then switch sides. Log band resistance or DB weight used."},
@@ -831,26 +831,4 @@ function PlanView({routine}){
         <div style={{fontWeight:700,fontSize:"1rem",color:"#4a6fa5"}}>Rest Days</div>
         <div style={{fontSize:".85rem",color:"#777",marginTop:".4rem",lineHeight:1.55}}>
           {isMSTF?"Sample week: Monday → Workout A, Wednesday → HIIT, Friday → Workout B. Rest days between every session. Light walking is fine on off days.":
-          "Sample week: Mon → Day 1, Wed → Day 3, Fri → Day 5, Sat → HIIT (optional). Take rest days between training days. 20–30 min walk or gentle stretching."}</div></div>
-      <div style={{background:"#fff",borderRadius:"12px",marginBottom:".75rem",padding:"1rem 1.25rem",boxShadow:"0 1px 6px rgba(0,0,0,.06)",border:"1px solid #e0dbd5"}}>
-        <div style={{fontWeight:700,fontSize:"1rem",color:"#c4713b"}}>Nutrition for Strength Span</div>
-        <div style={{fontSize:".85rem",color:"#777",marginTop:".4rem",lineHeight:1.55}}>
-          Aim for 0.7–1g protein per pound of bodyweight daily to support muscle repair and growth. Spread intake across meals — 25–40g per meal is ideal. Good sources: chicken, fish, eggs, Greek yogurt, cottage cheese, whey protein. Without adequate protein, your training can't build the muscle it stimulates. Stay hydrated — dehydration impairs both performance and recovery.</div></div></div>
-    <div style={{textAlign:"center",padding:"1rem",color:"#999",fontSize:".78rem",lineHeight:1.7}}>Sharp joint pain → stop & substitute. Consistency beats intensity.</div>
-  </div>);
-}
-
-function PS({title,items,color}){
-  return(<div style={{marginTop:"1rem"}}>
-    <div style={{fontWeight:700,fontSize:".75rem",textTransform:"uppercase",letterSpacing:".06em",color:"#999",marginBottom:".5rem",paddingBottom:".3rem",borderBottom:"1px dashed #e0dbd5"}}>{title}</div>
-    {items.map((item,i)=>(<div key={i} style={{padding:".5rem 0",borderBottom:i<items.length-1?"1px solid #f0ece7":"none"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:".5rem"}}>
-        <span style={{fontWeight:600,fontSize:".92rem"}}>{item.name}</span>
-        <span style={{fontSize:".8rem",color:color,fontWeight:700,whiteSpace:"nowrap"}}>{item.target||item.sets}</span></div>
-      <div style={{fontSize:".8rem",color:"#777",marginTop:".1rem",lineHeight:1.45}}>{item.note}</div></div>))}</div>);
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
-</body>
-</html>
+          "Sample week: Mon → Day 1, Wed → Day 3, Fri → Day 5, Sat → HIIT (optional). Take rest days between training days. 20–30 min walk or gentle stretching."}</div></d
